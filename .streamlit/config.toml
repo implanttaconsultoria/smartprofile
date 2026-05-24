@@ -1,0 +1,15 @@
+[theme]
+# Cor de realce para botões, links e destaques (Turquesa Vibrante)
+primaryColor = "#00B5B5" 
+
+# Cor de fundo da área principal (Branco Puro para limpeza)
+backgroundColor = "#FFFFFF"
+
+# Cor de fundo do menu lateral (Azul Oceano Profundo para autoridade)
+secondaryBackgroundColor = "#004B8D"
+
+# Cor dos textos principais (Preto para sobriedade)
+textColor = "#000000"
+
+# Fonte do sistema (Sans Serif moderna e limpa)
+font = "sans serif"
