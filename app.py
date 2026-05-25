@@ -9,23 +9,10 @@ st.set_page_config(
     layout="wide"
 )
 
-# ---- BARRA LATERAL (MENU CENTRALIZADO E COLORIDO) ----
-# Centraliza a logo com CSS customizado
-st.markdown("""
-    <style>
-    [data-testid="stSidebarImage"] {
-        display: block;
-        margin-left: auto;
-        margin-right: auto;
-        width: 150px;
-        margin-top: 20px;
-        margin-bottom: 20px;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
+# ---- BARRA LATERAL (MENU AUTOMATICAMENTE COLORIDO) ----
+# O Streamlit vai ajustar a sua logo de 603x238 automaticamente para a largura da barra
 try:
-    st.sidebar.image("logo.png", use_container_width=True)
+    st.sidebar.image("logo_branca.png", use_container_width=True)
 except:
     st.sidebar.subheader("🌱 Implantta Consultoria")
 
@@ -40,8 +27,7 @@ dados_candidatos = {
     "Pedro Lima": {"vaga": "Desenvolvedor Python", "visual": 25, "auditivo": 35, "cinestesico": 40, "perfil": "Analista/Executor"}
 }
 
-# Definição das cores da marca para os gráficos
-cores_implantta = px.colors.qualitative.Prism
+# Definição das cores da marca para os gráficos (Canais)
 cores_canais = {"Visual": "#00B5B5", "Auditivo": "#33CCCC", "Cinestésico": "#004B8D"}
 
 # ---- TELA: PERFIL DO CANDIDATO ----
@@ -54,7 +40,7 @@ if tela == "👤 Perfil do Candidato":
     
     st.markdown("---")
     
-    # Informações Básicas organizadas em cards limpos e coloridos com turquesa
+    # Informações Básicas organizadas em cards limpos
     col_a, col_b, col_c = st.columns(3)
     with col_a:
         st.info(f"**Vaga Alvo:**\n\n{info['vaga']}")
