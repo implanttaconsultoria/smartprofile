@@ -1,6 +1,18 @@
+import os
+import shutil
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+
+# =====================================================================
+# 🪄 TRUQUE DE COMPATIBILIDADE COM O RENDER
+# Como o Render não permite '/' no nome do arquivo, nós criamos como 'secrets.toml'
+# e este bloco move o arquivo para a pasta '.streamlit/' automaticamente.
+# =====================================================================
+if os.path.exists("secrets.toml") and not os.path.exists(".streamlit/secrets.toml"):
+    os.makedirs(".streamlit", exist_ok=True)
+    shutil.copy("secrets.toml", ".streamlit/secrets.toml")
+# =====================================================================
 
 # 1. Configuração da página - Nome da sua empresa no navegador
 st.set_page_config(
@@ -10,7 +22,6 @@ st.set_page_config(
 )
 
 # ---- BARRA LATERAL (MENU AUTOMATICAMENTE COLORIDO) ----
-# O Streamlit vai ajustar a sua logo de 603x238 automaticamente para a largura da barra
 try:
     st.sidebar.image("logo_branca.png", use_container_width=True)
 except:
@@ -70,7 +81,6 @@ if tela == "👤 Perfil do Candidato":
     with col2:
         st.subheader("🧠 Parecer de Contratação (Implantta AI)")
         
-        # Alerta visual de recomendação usando o turquesa vibrante
         st.success("📝 **Recomendação:** Candidato com Forte Aderência ao Perfil da Vaga.")
         
         texto_parecer = f"""
@@ -85,8 +95,6 @@ if tela == "👤 Perfil do Candidato":
         * Recomenda-se validar a sua tolerância à frustração em ciclos longos de negociação.
         """
         st.markdown(texto_parecer)
-        
-        # Botão de PDF com a cor primária turquesa
         st.button("🖨️ Exportar Relatório em PDF", key="btn_pdf")
 
 # ---- TELA: DASHBOARD GERAL ----
@@ -94,7 +102,6 @@ elif tela == "📊 Dashboard Geral":
     st.title("📊 Painel Geral de Recrutamento")
     st.markdown("Visão macro dos testes realizados no sistema.")
     
-    # Métricas com o turquesa vibrante
     col1, col2, col3 = st.columns(3)
     col1.metric(label="Total de Candidatos", value=len(dados_candidatos), delta="30 dias")
     col2.metric("Vagas Monitoradas", "3")
