@@ -3,9 +3,10 @@ import shutil
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+from streamlit_gsheets import GSheetsConnection  # ✨ CORREÇÃO: Importando a conexão corretamente
 
 # =====================================================================
-# 🪄 TRUQUE DE COMPATIBILIDADE COM O RENDER (MANTIDO)
+# 🪄 TRUQUE DE COMPATIBILIDADE COM O RENDER
 # =====================================================================
 if os.path.exists("secrets.toml") and not os.path.exists(".streamlit/secrets.toml"):
     os.makedirs(".streamlit", exist_ok=True)
@@ -38,8 +39,8 @@ cores_canais = {"Visual": "#00B5B5", "Auditivo": "#33CCCC", "Cinestésico": "#00
 @st.cache_data(ttl=60) # Atualiza os dados a cada 60 segundos
 def carregar_dados_planilha():
     try:
-        # Cria a conexão usando o arquivo secrets salvo no Render
-        conn = st.connection("gsheets", type=st.connections.GSheetsConnection)
+        # ✨ CORREÇÃO: Usando a classe GSheetsConnection diretamente aqui
+        conn = st.connection("gsheets", type=GSheetsConnection)
         # Lê a planilha ativa
         df = conn.read()
         # Remove linhas totalmente vazias se houverem
@@ -57,11 +58,8 @@ df_dados = carregar_dados_planilha()
 def calcular_resultados_reais(linha_candidato):
     """
     Aqui dentro o Python vai aplicar as regras da sua planilha de pesos.
-    Por enquanto, deixei valores fixos simulados até você me passar as regras!
+    Por enquanto, deixei valores fixos simulados até configurarmos os pesos!
     """
-    # Exemplo de como o Python lerá uma resposta de texto ou número futuramente:
-    # resposta_q1 = linha_candidato["Pergunta 1"]
-    
     resultados = {
         "visual": 40,
         "auditivo": 35,
@@ -90,10 +88,9 @@ if tela == "👤 Perfil do Candidato":
         # Filtra a linha exata do candidato selecionado
         dados_candidato_real = df_dados[df_dados["Nome do candidato"] == candidato_sel].iloc[0]
         
-        # Puxa as informações das colunas que você me passou
+        # Puxa as informações das colunas
         vaga_alvo = dados_candidato_real["Setores /função a qual o candidato está se candidatando"]
         
-        # Tenta puxar a empresa (como tem parênteses no nome da coluna, usamos o nome exato)
         try:
             empresa_alvo = dados_candidato_real["(Empresa  a qual ele está se candidatando a vaga)"]
         except:
