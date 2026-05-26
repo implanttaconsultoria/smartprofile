@@ -3,6 +3,7 @@ import shutil
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+from streamlit_gsheets import GSheetsConnection  # ✨ Agora vai funcionar perfeitamente com o cache limpo!
 
 # =====================================================================
 # 🪄 TRUQUE DE COMPATIBILIDADE COM O RENDER
@@ -43,13 +44,13 @@ cores_canais = {
 @st.cache_data(ttl=30) # Atualiza a cada 30 segundos
 def carregar_dados_planilha():
     try:
-        conn = st.connection("gsheets")
+        # ✨ Solução do Loop: Passamos a classe explicitamente para o Streamlit não se perder
+        conn = st.connection("gsheets", type=GSheetsConnection)
         df = conn.read()
-        # Limpa linhas onde o nome esteja em branco
         df = df.dropna(subset=["Nome"])
         return df
     except Exception as e:
-        st.error(f"Erro de conexão: Verifique os nomes das colunas ou chaves. Detalhes: {e}")
+        st.error(f"Erro de conexão: Verifique as chaves ou colunas. Detalhes: {e}")
         return None
 
 df_dados = carregar_dados_planilha()
@@ -58,7 +59,6 @@ df_dados = carregar_dados_planilha()
 # 🧮 PROCESSAMENTO E MATEMÁTICA REAL DO TESTE REPRESENTACIONAL (PNL)
 # =====================================================================
 def calcular_sistema_representacional(linha):
-    # Mapeamento exato baseado nas alternativas fornecidas
     colunas_visual = [
         "Eu tomo decisões importantes baseados em: [o que me parece melhor]",
         "Durante uma discussão eu sou mais influenciado por: [se eu posso ou não ver o argumento da outra pessoa]",
@@ -91,7 +91,6 @@ def calcular_sistema_representacional(linha):
         "Eu me percebo assim: [se sou muito capaz de raciocinar com fatos e dados novos]"
     ]
     
-    # Soma dos pontos convertendo os valores de texto para números com segurança
     v_score = sum([pd.to_numeric(linha[col], errors='coerce') for col in colunas_visual if col in linha])
     a_score = sum([pd.to_numeric(linha[col], errors='coerce') for col in colunas_auditivo if col in linha])
     c_score = sum([pd.to_numeric(linha[col], errors='coerce') for col in colunas_cinestesico if col in linha])
@@ -115,7 +114,7 @@ else:
     lista_candidatos = ["Aguardando conexão com a planilha..."]
 
 # =====================================================================
-# TELA 1: PERFIL DO CANDIDATO (INDIVIDUAL)
+# TELA 1: PERFIL DO CANDIDATO
 # =====================================================================
 if tela == "👤 Perfil do Candidato":
     st.title("👤 Avaliação Individual de Perfil")
@@ -124,21 +123,17 @@ if tela == "👤 Perfil do Candidato":
     candidato_sel = st.selectbox("Selecione o Candidato para analisar os resultados:", lista_candidatos)
     
     if df_dados is not None and candidato_sel in df_dados["Nome"].values:
-        # Puxa a linha exata do candidato
         linha_cand = df_dados[df_dados["Nome"] == candidato_sel].iloc[0]
         
-        # Atribuição de variáveis seguras baseadas nas suas colunas
         vaga_alvo = linha_cand["Setor"] if "Setor" in linha_cand else "Não Informado"
         empresa_alvo = linha_cand["Empresa"] if "Empresa" in linha_cand else "Não Informada"
         email_cand = linha_cand["Endereço de e-mail"] if "Endereço de e-mail" in linha_cand else "Não Informado"
         data_teste = linha_cand["Data:"] if "Data:" in linha_cand else "Não Informada"
         
-        # Realiza o cálculo matemático dos canais representacionais
         valores_canais = calcular_sistema_representacional(linha_cand)
         
         st.markdown("---")
         
-        # Painel de Metadados
         col_a, col_b, col_c, col_d = st.columns(4)
         with col_a:
             st.info(f"**Vaga / Função:**\n\n{vaga_alvo}")
@@ -155,7 +150,6 @@ if tela == "👤 Perfil do Candidato":
         
         with col1:
             st.subheader("📊 Sistema Representacional (PNL Real)")
-            # Monta tabela para o gráfico de barras
             df_chart = pd.DataFrame({
                 "Canal": list(valores_canais.keys()),
                 "Percentagem (%)": list(valores_canais.values())
@@ -170,7 +164,6 @@ if tela == "👤 Perfil do Candidato":
             st.subheader("🧠 Parecer de Engenharia de Perfil")
             st.success("📝 **Status:** Dados integrados e tabulados via API com sucesso.")
             
-            # Identifica o canal predominante dinamicamente
             predominante = max(valores_canais, key=valores_canais.get)
             
             st.markdown(f"""
@@ -181,7 +174,6 @@ if tela == "👤 Perfil do Candidato":
             * Use essa informação para estruturar dinâmicas de entrevista alinhadas com a velocidade de processamento dele.
             """)
             
-            # SEÇÃO EXPANSÍVEL: Respostas comportamentais brutas para o consultor analisar
             st.markdown("---")
             with st.expander("🔍 Ver Respostas Brutas do Teste Comportamental (Texto)"):
                 perguntas_texto = [
