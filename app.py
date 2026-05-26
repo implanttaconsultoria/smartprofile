@@ -3,10 +3,9 @@ import shutil
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-from streamlit_gsheets import GSheetsConnection  # ✨ CORREÇÃO: Importando a conexão corretamente
 
 # =====================================================================
-# 🪄 TRUQUE DE COMPATIBILIDADE COM O RENDER
+# 🪄 TRUQUE DE COMPATIBILIDADE COM O RENDER (MANTIDO)
 # =====================================================================
 if os.path.exists("secrets.toml") and not os.path.exists(".streamlit/secrets.toml"):
     os.makedirs(".streamlit", exist_ok=True)
@@ -34,16 +33,14 @@ tela = st.sidebar.radio("Navegar para:", ["📊 Dashboard Geral", "👤 Perfil d
 cores_canais = {"Visual": "#00B5B5", "Auditivo": "#33CCCC", "Cinestésico": "#004B8D"}
 
 # =====================================================================
-# 🔌 CONEXÃO REAL COM O GOOGLE SHEETS
+# 🔌 CONEXÃO REAL COM O GOOGLE SHEETS (SEM IMPORT NO TOPO)
 # =====================================================================
 @st.cache_data(ttl=60) # Atualiza os dados a cada 60 segundos
 def carregar_dados_planilha():
     try:
-        # ✨ CORREÇÃO: Usando a classe GSheetsConnection diretamente aqui
-        conn = st.connection("gsheets", type=GSheetsConnection)
-        # Lê a planilha ativa
+        # Mudança aqui: Chamamos o "gsheets" por texto direto, sem precisar do import
+        conn = st.connection("gsheets")
         df = conn.read()
-        # Remove linhas totalmente vazias se houverem
         df = df.dropna(subset=["Nome do candidato"])
         return df
     except Exception as e:
@@ -56,10 +53,6 @@ df_dados = carregar_dados_planilha()
 # 🧮 FUNÇÃO DE TABULAÇÃO E PESOS (A MENTE DO SEU TESTE)
 # =====================================================================
 def calcular_resultados_reais(linha_candidato):
-    """
-    Aqui dentro o Python vai aplicar as regras da sua planilha de pesos.
-    Por enquanto, deixei valores fixos simulados até configurarmos os pesos!
-    """
     resultados = {
         "visual": 40,
         "auditivo": 35,
@@ -85,10 +78,8 @@ if tela == "👤 Perfil do Candidato":
     candidato_sel = st.selectbox("Selecione o Candidato para Análise:", lista_candidatos)
     
     if df_dados is not None and candidato_sel in df_dados["Nome do candidato"].values:
-        # Filtra a linha exata do candidato selecionado
         dados_candidato_real = df_dados[df_dados["Nome do candidato"] == candidato_sel].iloc[0]
         
-        # Puxa as informações das colunas
         vaga_alvo = dados_candidato_real["Setores /função a qual o candidato está se candidatando"]
         
         try:
@@ -96,14 +87,12 @@ if tela == "👤 Perfil do Candidato":
         except:
             empresa_alvo = "Não informada"
             
-        email_candidato = dados_candidato_real.iloc[-1] # Puxa a última coluna da planilha (E-mail)
+        email_candidato = dados_candidato_real.iloc[-1] 
         
-        # Executa os cálculos matemáticos baseados na linha dele
         metricas = calcular_resultados_reais(dados_candidato_real)
         
         st.markdown("---")
         
-        # Informações Básicas organizadas em cards limpos
         col_a, col_b, col_c, col_d = st.columns(4)
         with col_a:
             st.info(f"**Vaga / Função:**\n\n{vaga_alvo}")
@@ -116,7 +105,6 @@ if tela == "👤 Perfil do Candidato":
         
         st.markdown("<br>", unsafe_allow_html=True)
         
-        # Gráficos e Parecer
         col1, col2 = st.columns([1, 1.2])
         
         with col1:
