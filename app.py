@@ -6,7 +6,7 @@ import plotly.express as px
 from streamlit_gsheets import GSheetsConnection
 
 # =====================================================================
-# 🪄 TRUQUE DE COMPATIBILIDADE SENSÍVEL (SEMPRE SOBRESCREVE)
+# 🪄 TRUQUE DE COMPATIBILIDADE SENSÍVEL
 # =====================================================================
 if os.path.exists("secrets.toml"):
     os.makedirs(".streamlit", exist_ok=True)
@@ -22,27 +22,29 @@ st.set_page_config(
 st.sidebar.title("Painel de Controle")
 tela = st.sidebar.radio("Navegar para:", ["📊 Dashboard Geral", "👤 Perfil do Candidato"])
 
-# Definição das cores
-cores_canais = {"Visual": "#00B5B5", "Auditivo": "#33CCCC", "Cinestésico": "#004B8D", "Digital (Lógico)": "#FF7A00"}
-
 # =====================================================================
-# 🔌 CONEXÃO PURA (SEM FILTROS INICIAIS)
+# 🔌 CONEXÃO FORÇADA (O GOLPE DE MESTRE)
 # =====================================================================
-@st.cache_data(ttl=10) # Atualiza rápido para testarmos
+@st.cache_data(ttl=10)
 def carregar_dados_diagnostico():
     try:
         conn = st.connection("gsheets", type=GSheetsConnection)
-        df = conn.read()
+        
+        # ✨ INJEÇÃO DIRETA DA URL: Ignoramos o arquivo secrets.toml para o link!
+        url_planilha = "https://docs.google.com/spreadsheets/d/1cz6O2iSync1c2E-lNGmEsgwMBrOgB2DHWz02A-y2g1Y/edit"
+        
+        # Lemos a planilha forçando o link exato
+        df = conn.read(spreadsheet=url_planilha)
         return df
     except Exception as e:
         st.error("🚨 CONEXÃO BLOQUEADA PELO GOOGLE OU ERRO DE CHAVE!")
-        st.exception(e) # Exibe o rastro técnico completo do erro na tela
+        st.exception(e) 
         return None
 
 df_dados = carregar_dados_diagnostico()
 
 # =====================================================================
-# SE CONECTOU, EXIBE O DIAGNÓSTICO DAS COLUNAS REAL
+# SE CONECTOU, EXIBE O DIAGNÓSTICO
 # =====================================================================
 if df_dados is not None:
     st.success("🎉 EXCELENTE! O Python conseguiu abrir a sua planilha do Google Sheets!")
@@ -50,7 +52,7 @@ if df_dados is not None:
     st.markdown("### 🔍 Lista de Colunas Detectadas na sua Planilha:")
     st.info(", ".join([f"**[{col}]**" for col in df_dados.columns]))
     
-    # Identificação automática da coluna de nome para não travar
+    # Identificação automática da coluna de nome
     coluna_nome_real = None
     for col in df_dados.columns:
         if "nome" in col.lower():
@@ -73,7 +75,7 @@ if df_dados is not None:
         if candidato_sel in df_dados[coluna_nome_real].values:
             linha_cand = df_dados[df_dados[coluna_nome_real] == candidato_sel].iloc[0]
             st.write("✅ Dados do candidato carregados. Pronto para acoplamento das fórmulas.")
-            st.json(linha_cand.to_dict()) # Mostra os dados brutos dele organizados
+            st.json(linha_cand.to_dict()) 
 
     # ---- TELA: DASHBOARD GERAL ----
     else:
