@@ -3,7 +3,6 @@ import shutil
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-from streamlit_gsheets import GSheetsConnection  # ✨ Agora vai funcionar perfeitamente com o cache limpo!
 
 # =====================================================================
 # 🪄 TRUQUE DE COMPATIBILIDADE COM O RENDER
@@ -41,11 +40,11 @@ cores_canais = {
 # =====================================================================
 # 🔌 CONEXÃO REAL COM O GOOGLE SHEETS
 # =====================================================================
-@st.cache_data(ttl=30) # Atualiza a cada 30 segundos
+@st.cache_data(ttl=30) 
 def carregar_dados_planilha():
     try:
-        # ✨ Solução do Loop: Passamos a classe explicitamente para o Streamlit não se perder
-        conn = st.connection("gsheets", type=GSheetsConnection)
+        # O Streamlit acha o pacote sozinho se ele estiver no requirements.txt
+        conn = st.connection("gsheets")
         df = conn.read()
         df = df.dropna(subset=["Nome"])
         return df
