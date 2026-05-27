@@ -163,4 +163,88 @@ if tela == "👤 Perfil do Candidato":
         
         st.markdown("---")
         
-        col_a, col_b, col_c, col_d = st.columns(4
+        col_a, col_b, col_c, col_d = st.columns(4)
+        with col_a:
+            st.info(f"**Vaga / Função:**\n\n{vaga_alvo}")
+        with col_b:
+            st.info(f"**Empresa Solicitante:**\n\n{empresa_alvo}")
+        with col_c:
+            st.info(f"**E-mail de Contato:**\n\n{email_cand}")
+        with col_d:
+            st.info(f"**Data de Aplicação:**\n\n{data_teste}")
+            
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        col1, col2 = st.columns([1, 1.2])
+        
+        with col1:
+            st.subheader("📊 Sistema Representacional (PNL Real)")
+            df_chart = pd.DataFrame({
+                "Canal": list(valores_canais.keys()),
+                "Percentagem (%)": list(valores_canais.values())
+            })
+            fig = px.bar(df_chart, x="Canal", y="Percentagem (%)", color="Canal",
+                         text="Percentagem (%)", template="streamlit",
+                         color_discrete_map=cores_canais)
+            fig.update_layout(showlegend=False)
+            st.plotly_chart(fig, use_container_width=True)
+            
+        with col2:
+            st.subheader("🧠 Parecer de Engenharia de Perfil")
+            st.success("📝 **Status:** Dados integrados e tabulados via API com sucesso.")
+            
+            predominante = max(valores_canais, key=valores_canais.get)
+            
+            st.markdown(f"""
+            O candidato **{candidato_sel}** apresenta um perfil de comunicação predominantemente **{predominante}** ({valores_canais[predominante]}%).
+            
+            **Dicas de Abordagem para o Consultor:**
+            * O gráfico ao lado representa a distribuição exata de energia de captação de estímulos do candidato.
+            * Use essa informação para estruturar dinâmicas de entrevista alinhadas com a velocidade de processamento dele.
+            """)
+            
+            # 🔍 ABA ATUALIZADA COM AS PERGUNTAS ÚNICAS REAIS DA PLANILHA
+            st.markdown("---")
+            with st.expander("🔍 Ver Respostas Brutas do Teste Comportamental (Texto)"):
+                perguntas_texto = [
+                    "Eu sou", "Eu gosto de ...", "Se você quiser se dar bem comigo....",
+                    "Para conseguir obter bons resultados é preciso...", "Eu me divirto quando...",
+                    "Eu penso que...", "Minha preocupação é...", "Eu escolho...", "Eu prefiro.",
+                    "Eu gosto de chegar...", "Um ótimo dia para mim é quando...", "Eu vejo a morte como...",
+                    "Minha Filosofia de vida é...", "Eu sempre gostei de...", "Eu gosto de mudanças se...",
+                    "Não existe nada de errado em...", "Eu gosto de buscar conselhos de...", "Meu lema é...",
+                    "Para mim é essencial...", "Tempo para mim é...", "Se eu fosse bilionário...", 
+                    "Eu acredito que...", "Eu acredito também que...", "Eu acredito ainda que...", 
+                    "Eu acho que..."
+                ]
+                for p in perguntas_texto:
+                    if p in linha_cand:
+                        st.markdown(f"**{p}**")
+                        st.code(linha_cand[p])
+
+# =====================================================================
+# TELA 2: DASHBOARD GERAL
+# =====================================================================
+elif tela == "📊 Dashboard Geral":
+    st.title("📊 Painel Geral de Recrutamento")
+    st.markdown("Monitoramento macro e fluxo de entrada da planilha do Google Drive.")
+    
+    total_candidatos = len(lista_candidatos) if df_dados is not None and "Nome" in df_dados.columns else 0
+    
+    col1, col2, col3 = st.columns(3)
+    col1.metric(label="Total de Candidatos Avaliados", value=total_candidatos)
+    col2.metric("Conexão Google Drive", "Ativa e Segura" if df_dados is not None else "Inativa")
+    col3.metric("Atualização Automática", "A cada 30s")
+    
+    if df_dados is not None and "Nome" in df_dados.columns:
+        st.markdown("### 📋 Fluxo de Respostas Mais Recentes")
+        
+        colunas_exibicao = []
+        for col in ["Carimbo de data/hora", "Nome", "Empresa", "Setor"]:
+            if col in df_dados.columns:
+                colunas_exibicao.append(col)
+                
+        if colunas_exibicao:
+            st.dataframe(df_dados[colunas_exibicao])
+        else:
+            st.dataframe(df_dados)
