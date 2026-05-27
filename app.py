@@ -3,6 +3,7 @@ import shutil
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+from streamlit_gsheets import GSheetsConnection  # ✨ Agora vai funcionar porque a biblioteca está instalada!
 
 # =====================================================================
 # 🪄 TRUQUE DE COMPATIBILIDADE COM O RENDER
@@ -40,11 +41,11 @@ cores_canais = {
 # =====================================================================
 # 🔌 CONEXÃO REAL COM O GOOGLE SHEETS
 # =====================================================================
-@st.cache_data(ttl=30) 
+@st.cache_data(ttl=30) # Atualiza a cada 30 segundos
 def carregar_dados_planilha():
     try:
-        # O Streamlit acha o pacote sozinho se ele estiver no requirements.txt
-        conn = st.connection("gsheets")
+        # ✨ Solução do Conflito: Passamos a classe GSheetsConnection para o Streamlit não se perder com a palavra 'type'
+        conn = st.connection("gsheets", type=GSheetsConnection)
         df = conn.read()
         df = df.dropna(subset=["Nome"])
         return df
