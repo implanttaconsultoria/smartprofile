@@ -25,7 +25,7 @@ st.set_page_config(
 # =====================================================================
 st.markdown("""
     <style>
-    /* 1. Ajuste da Caixa de Seleção: Fundo Azul e Fonte Branca */
+    /* Ajuste da Caixa de Seleção: Fundo Azul e Fonte Branca */
     div[data-baseweb="select"] > div {
         background-color: #2B5C8F !important;
         color: white !important;
@@ -35,7 +35,7 @@ st.markdown("""
         color: white !important;
     }
     
-    /* 2. Menu Lateral Totalmente Branco para Contraste */
+    /* Menu Lateral Branco para Contraste */
     section[data-testid="stSidebar"] * {
         color: white !important;
     }
@@ -43,7 +43,7 @@ st.markdown("""
         color: white !important;
     }
     
-    /* 3. Configurações Estritas para a Geração do PDF Perfeito */
+    /* Configurações Estritas para a Geração do PDF Perfeito */
     @media print {
         /* Oculta interface do sistema */
         section[data-testid="stSidebar"] { display: none !important; }
@@ -53,17 +53,17 @@ st.markdown("""
         iframe { display: none !important; } 
         div[data-testid="stSelectbox"] { display: none !important; }
 
-        /* Remove margens do topo para aproveitar a página 1 toda */
+        /* Remove margens extras para aproveitar a página inteira */
         .block-container {
             padding-top: 0rem !important;
             padding-bottom: 0rem !important;
             margin-top: 0rem !important;
         }
 
-        /* Mantém os gráficos e blocos protegidos de corte */
-        .stPlotlyChart { page-break-inside: avoid !important; margin-bottom: 5px; }
-        [data-testid="stExpander"] { page-break-inside: avoid !important; margin-bottom: 5px; }
-        [data-testid="stVerticalBlock"] { page-break-inside: avoid !important; }
+        /* Compacta os espaços entre os blocos no PDF */
+        div[data-testid="stVerticalBlock"] { gap: 0rem !important; }
+        .stPlotlyChart { page-break-inside: avoid !important; margin-bottom: 0px !important; }
+        [data-testid="stExpander"] { page-break-inside: avoid !important; margin-bottom: 0px !important; }
         
         /* Força a impressão das cores corporativas */
         * {
@@ -100,7 +100,7 @@ cores_canais = {
 }
 
 # =====================================================================
-# 🔌 CONEXÃO E AUTO-LIMPEZA DA PLANILHA (BLINDADO)
+# 🔌 CONEXÃO E AUTO-LIMPEZA DA PLANILHA
 # =====================================================================
 @st.cache_data(ttl=30) 
 def carregar_dados_planilha():
@@ -131,7 +131,7 @@ def carregar_dados_planilha():
             
         return df
     except Exception as e:
-        st.error(f"Erro de conexão ou processamento: {e}")
+        st.error(f"Erro de conexão: {e}")
         return None
 
 df_dados = carregar_dados_planilha()
@@ -195,7 +195,6 @@ gabarito_comportamental = {
 def calcular_perfil_animais(linha):
     pontos = {"Águia": 0, "Gato": 0, "Lobo": 0, "Tubarão": 0}
     total_respondido = 0
-    
     for pergunta, alternativas in gabarito_comportamental.items():
         if pergunta in linha:
             resposta_cand = str(linha.get(pergunta, "")).strip().lower()
@@ -204,14 +203,12 @@ def calcular_perfil_animais(linha):
                     pontos[animal] += 1
                     total_respondido += 1
                     break
-                    
     percentuais = {}
     if total_respondido > 0:
         for animal, valor in pontos.items():
             percentuais[animal] = round((valor / total_respondido) * 100, 1)
     else:
         percentuais = {"Águia": 0, "Gato": 0, "Lobo": 0, "Tubarão": 0}
-        
     return percentuais
 
 if df_dados is not None and "Nome" in df_dados.columns:
@@ -224,13 +221,10 @@ else:
 # =====================================================================
 if tela == "👤 Perfil do Candidato":
     
-    # 🌟 CABEÇALHO (Logo maior e na Direita)
     col_titulo, col_logo = st.columns([3.5, 1.5])
-    
     with col_titulo:
         st.title("👤 Relatório de Engenharia de Perfil")
         st.caption("Mapeamento automatizado extraído em tempo real pela Implantta Consultoria.")
-        
     with col_logo:
         try:
             st.image("Versão Melhorada da Marca.png", use_container_width=True)
@@ -239,12 +233,10 @@ if tela == "👤 Perfil do Candidato":
             
     st.markdown("---")
     
-    # Seleção de Candidato + Espaço ampliado para o Botão
     col_sel, col_btn = st.columns([3, 1.5])
     with col_sel:
         candidato_sel = st.selectbox("Selecione o Candidato para analisar os resultados:", lista_candidatos)
     
-    # 🌟 BOTÃO INTELIGENTE DE DOWNLOAD
     with col_btn:
         st.write("")
         script_pdf = f"""
@@ -283,7 +275,6 @@ if tela == "👤 Perfil do Candidato":
         valores_canais = calcular_sistema_representacional(linha_cand)
         valores_animais = calcular_perfil_animais(linha_cand)
         
-        # CARD DE INFORMAÇÕES DO CANDIDATO
         col_a, col_b, col_c, col_d = st.columns(4)
         col_a.info(f"**Candidato:**\n\n**{candidato_sel}**")
         col_b.info(f"**Vaga / Função:**\n\n{vaga_alvo}")
@@ -292,7 +283,6 @@ if tela == "👤 Perfil do Candidato":
             
         st.markdown("<br>", unsafe_allow_html=True)
         
-        # 🟢 BLOCO 1: GRÁFICO DOS ANIMAIS E RESUMO
         st.markdown("### 🦁 Perfil Comportamental Predominante")
         
         perfis_ordenados = sorted(valores_animais.items(), key=lambda x: x[1], reverse=True)
@@ -316,11 +306,11 @@ if tela == "👤 Perfil do Candidato":
             )
             fig_animais.update_traces(textposition='inside', textinfo='percent+label')
             
-            # ✨ GRÁFICO COM TAMANHO DE DESTAQUE RESTAURADO (height=320)
+            # ✨ GRÁFICO MAIS COMPACTO PARA ENCAIXAR PERFEITO (height=260 e margens zeradas)
             fig_animais.update_layout(
-                height=320, 
+                height=260, 
                 showlegend=False, 
-                margin=dict(t=5, b=5, l=5, r=5)
+                margin=dict(t=0, b=0, l=0, r=0)
             )
             st.plotly_chart(fig_animais, use_container_width=True)
             
@@ -329,7 +319,6 @@ if tela == "👤 Perfil do Candidato":
             st.markdown(f"**Distribuição de Perfis:** Predominância Primária de **{top1_nome}** ({top1_valor}%) com suporte Secundário de **{top2_nome}** ({top2_valor}%).")
             st.info("💡 Logo abaixo, detalhamos os Pontos Fortes e os Pontos de Atenção baseados nesta distribuição comportamental.")
 
-        # 🟢 BLOCO 2 (NOVO LAYOUT): CAIXAS DE TEXTO LADO A LADO ABAIXO DO GRÁFICO
         detalhes_perfis = {
             "Tubarão": {
                 "fortes": "Foco em resultados, iniciativa, senso de urgência, coragem para decidir e alta resiliência sob pressão.",
@@ -351,7 +340,6 @@ if tela == "👤 Perfil do Candidato":
         
         vaga_lower = str(vaga_alvo).lower()
         tipo_vaga = "Geral"
-        
         if any(k in vaga_lower for k in ["contab", "financ", "fiscal", "lobo", "adm", "process", "ti", "suport", "auditor", "qualidad"]):
             tipo_vaga = "Processos/Contábil/Analítico"
             perfis_ideais = ["Lobo", "Tubarão"]
@@ -367,7 +355,6 @@ if tela == "👤 Perfil do Candidato":
             
         convergente = (top1_nome in perfis_ideais)
 
-        # Divisão em duas colunas logo abaixo do gráfico para não "esmagar" a visualização
         col_fortes, col_fracos = st.columns(2)
         with col_fortes:
             with st.expander("⭐ Pontos Fortes do Candidato", expanded=True):
@@ -383,7 +370,6 @@ if tela == "👤 Perfil do Candidato":
 
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # 🎯 BLOCO 3: CONCLUSÃO E RECOMENDAÇÃO FINAL
         st.markdown("#### 🎯 Alinhamento com a Função & Conclusão")
         
         predominante_pnl = max(valores_canais, key=valores_canais.get)
@@ -416,7 +402,6 @@ if tela == "👤 Perfil do Candidato":
                     
         st.markdown("---")
         
-        # 🔵 BLOCO 4: PNL
         col_pnl1, col_pnl2 = st.columns([1, 1.2])
         
         with col_pnl1:
@@ -437,11 +422,11 @@ if tela == "👤 Perfil do Candidato":
                 color_discrete_map=cores_canais
             )
             
-            # ✨ GRÁFICO COM TAMANHO RESTAURADO (height=280)
+            # ✨ GRÁFICO COMPACTO (height=240 e margens zeradas)
             fig.update_layout(
-                height=280, 
+                height=240, 
                 showlegend=False, 
-                margin=dict(t=5, b=5, l=5, r=5)
+                margin=dict(t=0, b=0, l=0, r=0)
             )
             st.plotly_chart(fig, use_container_width=True)
             
