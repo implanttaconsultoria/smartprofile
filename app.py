@@ -171,7 +171,7 @@ gabarito_comportamental = {
     },
     "Eu penso que...": {
         "Unidos venceremos, divididos perderemos": "Gato",
-        "O ataque é melhor que a defense": "Tubarão",
+        "O ataque é melhor que a defesa": "Tubarão",
         "É bom ser manso, mas andar com um porrete": "Águia",
         "Um homem prevenido vale por dois": "Lobo"
     },
@@ -296,7 +296,8 @@ def calcular_perfil_animais(linha):
     total_respondido = 0
     
     for pergunta, alternativas in gabarito_comportamental.items():
-        if pergunta in line:
+        # AQUI ESTAVA O ERRO DE DIGITAÇÃO (line -> linha)
+        if pergunta in linha:
             resposta_cand = str(linha.get(pergunta, "")).strip().lower()
             for resp_chave, animal in alternativas.items():
                 if resp_chave.strip().lower() in resposta_cand:
@@ -406,7 +407,7 @@ if tela == "👤 Perfil do Candidato":
             }
             
             # 🔍 MOTOR DE CÁLCULO DE MATCH COM A VAGA
-            vaga_lower = vaga_alvo.lower()
+            vaga_lower = str(vaga_alvo).lower()
             tipo_vaga = "Geral"
             
             # Categorização simplificada da vaga com base em palavras-chave comuns
@@ -421,7 +422,7 @@ if tela == "👤 Perfil do Candidato":
                 perfis_ideais = ["Gato", "Águia"]
             else:
                 tipo_vaga = "Estratégico/Geral"
-                perfis_ideais = [top1_nome, top2_nome] # Se a vaga for genérica, assume o topo do candidato
+                perfis_ideais = [top1_nome, top2_nome]
                 
             # Verifica a convergência
             convergente = (top1_nome in perfis_ideais)
@@ -439,7 +440,7 @@ if tela == "👤 Perfil do Candidato":
                 if top2_valor > 15:
                     st.write(f"• **Riscos de {top2_nome}:** {detalhes_perfis[top2_nome]['fracos']}")
 
-        # 🎯 BLOCO DA CONCLUSÃO E RECOMENDAÇÃO FINAL (CRUZAMENTO COMPLETO)
+        # 🎯 BLOCO DA CONCLUSÃO E RECOMENDAÇÃO FINAL
         st.markdown("#### 🎯 Alinhamento com a Função & Conclusão do Consultor")
         
         predominante_pnl = max(valores_canais, key=valores_canais.get)
@@ -463,7 +464,6 @@ if tela == "👤 Perfil do Candidato":
                 st.metric(label="RECOMENDAÇÃO FINAL", value="✅ CONTRATAR")
                 st.caption("🏆 **Justificativa:** Alta aderência comportamental com o escopo da vaga e o estilo de raciocínio técnico exigido pela função.")
             else:
-                # Se o perfil primário não é o ideal, avalia o secundário
                 if top2_nome in perfis_ideais:
                     st.metric(label="RECOMENDAÇÃO FINAL", value="🟡 CONTRATAR COM RESERVAS")
                     st.caption("👀 **Justificativa:** O perfil principal difere do esperado, mas o perfil secundário equilibra as competências técnicas. Recomendado focar a entrevista técnica nos pontos de atenção.")
