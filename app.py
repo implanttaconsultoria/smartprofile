@@ -4,6 +4,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 from streamlit_gsheets import GSheetsConnection
+import streamlit.components.v1 as components
 
 # =====================================================================
 # 🪄 TRUQUE DE COMPATIBILIDADE (RENDER)
@@ -19,6 +20,32 @@ st.set_page_config(
     layout="wide"
 )
 
+# =====================================================================
+# 🎨 ESTILOS VISUAIS CUSTOMIZADOS (CSS) E MODO IMPRESSÃO (PDF)
+# =====================================================================
+st.markdown("""
+    <style>
+    /* 1. Ajuste da Caixa de Seleção: Fundo Azul e Fonte Branca */
+    div[data-baseweb="select"] > div {
+        background-color: #2B5C8F !important;
+        color: white !important;
+        border-radius: 5px;
+    }
+    div[data-baseweb="select"] > div * {
+        color: white !important;
+    }
+    
+    /* 2. Ocultar elementos desnecessários na hora de gerar o PDF */
+    @media print {
+        section[data-testid="stSidebar"] { display: none !important; }
+        header[data-testid="stHeader"] { display: none !important; }
+        .stRadio { display: none !important; }
+        div.stButton { display: none !important; }
+        iframe { display: none !important; } /* Esconde o iframe do botão de imprimir no PDF */
+    }
+    </style>
+""", unsafe_allow_html=True)
+
 # ---- BARRA LATERAL (MENU E LOGO) ----
 try:
     st.sidebar.image("logo_branca.png", use_container_width=True)
@@ -29,12 +56,12 @@ st.sidebar.markdown("---")
 st.sidebar.title("Painel de Controle")
 tela = st.sidebar.radio("Navegar para:", ["📊 Dashboard Geral", "👤 Perfil do Candidato"])
 
-# 🔥 NOVA PALETA DE CORES: SÓBRIA, PROFISSIONAL E COM ALTO CONTRASTE
+# 🔥 PALETA DE CORES: SÓBRIA, PROFISSIONAL E COM ALTO CONTRASTE
 cores_animais = {
-    "Tubarão": "#2B5C8F",   # Azul Oceano Sóbrio (Foco, Execução)
-    "Lobo": "#5A6B7C",      # Cinza Corporativo (Ordem, Processos)
-    "Águia": "#DDA15E",     # Ouro Velho / Mostarda Sóbrio (Criatividade, Visão)
-    "Gato": "#8EBCB5"       # Verde Sálvia / Menta Sóbrio (Empatia, Pessoas)
+    "Tubarão": "#2B5C8F",   
+    "Lobo": "#5A6B7C",      
+    "Águia": "#DDA15E",     
+    "Gato": "#8EBCB5"       
 }
 
 cores_canais = {
@@ -139,156 +166,31 @@ def calcular_sistema_representacional(linha):
 # 🦁 2. PROCESSAMENTO TESTE COMPORTAMENTAL (ANIMAIS)
 # =====================================================================
 gabarito_comportamental = {
-    "Eu sou": {
-        "Idealista, criativo e visionário": "Águia",
-        "Divertido, espiritual e benéfico": "Gato",
-        "Confiável, meticuloso e previsível": "Lobo",
-        "Focado, determinado e persistente": "Tubarão"
-    },
-    "Eu gosto de ...": {
-        "Ser piloto, o condutor": "Tubarão",
-        "Conversar com os passageiros": "Gato",
-        "Planejar a viajem": "Lobo",
-        "Explorar novas rotas": "Águia"
-    },
-    "Se você quiser se dar bem comigo....": {
-        "Me dê liberdade": "Águia",
-        "Me deixe saber sua expectativa": "Lobo",
-        "Lidere, siga ou saia do meu caminho": "Tubarão",
-        "Seja amigável, carinhoso e compreensivo": "Gato"
-    },
-    "Para conseguir obter bons resultados é preciso...": {
-        "Ter incertezas": "Águia",
-        "Controlar o fundamental": "Lobo",
-        "Diversão e comemoração": "Gato",
-        "Planejar e obter os recursos para executar": "Tubarão"
-    },
-    "Eu me divirto quando...": {
-        "Estou me exercitando": "Tubarão",
-        "Tenho novidades": "Águia",
-        "Estou com os outros": "Gato",
-        "Determino as regras": "Lobo"
-    },
-    "Eu penso que...": {
-        "Unidos venceremos, divididos perderemos": "Gato",
-        "O ataque é melhor que a defesa": "Tubarão",
-        "É bom ser manso, mas andar com um porrete": "Águia",
-        "Um homem prevenido vale por dois": "Lobo"
-    },
-    "Minha preocupação é...": {
-        "Gerar uma idéia global da situação": "Águia",
-        "Fazer com que as pessoas gostem": "Gato",
-        "Fazer com que a coisa funcione": "Lobo",
-        "Fazer com que aconteça": "Tubarão"
-    },
-    "Eu escolho...": {
-        "Perguntas ao invés de respostas": "Águia",
-        "Ter todos os detalhes": "Lobo",
-        "Vantagens a meu favor": "Tubarão",
-        "Que todos tenham a chance de serem escutados": "Gato"
-    },
-    "Eu prefiro.": {
-        "Fazer progressos": "Tubarão",
-        "Construir memórias": "Gato",
-        "Fazer sentido": "Lobo",
-        "Tornar as pessoas confortáveis": "Águia"
-    },
-    "Eu gosto de chegar...": {
-        "Na frente": "Tubarão",
-        "Junto": "Gato",
-        "Na hora": "Lobo",
-        "Em outro lugar": "Águia"
-    },
-    "Um ótimo dia para mim é quando...": {
-        "Consigo fazer muitas coisas": "Tubarão",
-        "Me divirto com meus amigos": "Gato",
-        "Tudo segue conforme planejado": "Lobo",
-        "Desfruto de coisas novas e estimulantes": "Águia"
-    },
-    "Eu vejo a morte como...": {
-        "Uma grande aventura misteriosa": "Águia",
-        "Oportunidade para rever os falecidos": "Gato",
-        "Um modo de receber recompensas": "Lobo",
-        "Algo que sempre chega muito cedo": "Tubarão"
-    },
-    "Minha Filosofia de vida é...": {
-        "Há ganhadores e perdedores, e eu sou um ganhador": "Tubarão",
-        "Para eu ganhar, ninguém precisa perder": "Gato",
-        "Para ganhar é preciso seguir as regras": "Lobo",
-        "Para ganhar, é necessário inventar novas regras": "Águia"
-    },
-    "Eu sempre gostei de...": {
-        "Explorar algo novo": "Águia",
-        "Evitar surpresas": "Lobo",
-        "Focalizar uma meta": "Tubarão",
-        "Deixar acontecer naturalmente": "Gato"
-    },
-    "Eu gosto de mudanças se...": {
-        "Me der mais liberdade e variedade": "Águia",
-        "Melhorar ou me der mais controle da situação": "Lobo",
-        "For divertido e puder ser compartilhado": "Gato",
-        "Me der uma vantagem competitiva": "Tubarão"
-    },
-    "Não existe nada de errado em...": {
-        "Se colocar na frente dos outros": "Tubarão",
-        "Colocar os outros na frente": "Gato",
-        "Ser consistente": "Lobo",
-        "Mudar de idéia": "Águia"
-    },
-    "Eu gosto de buscar conselhos de...": {
-        "Pessoas bem sucedidas": "Tubarão",
-        "Anciões, idosos e conselheiros": "Gato",
-        "Autoridades no assunto": "Lobo",
-        "Lugares, até os mais estranhos": "Águia"
-    },
-    "Meu lema é...": {
-        "Fazer o que precisa ser feito": "Águia",
-        "Fazer bem feito": "Lobo",
-        "Fazer Junto com o grupo": "Gato",
-        "Simplesmente Fazer": "Tubarão"
-    },
-    "Para mim é essencial...": {
-        "Complexidade mesmo que pareça confusa": "Águia",
-        "Ordem e sistematização": "Lobo",
-        "Calor humano e animação": "Gato",
-        "Coisas claras e simples": "Tubarão"
-    },
-    "Tempo para mim é...": {
-        "Algo que detesto desperdiçar": "Tubarão",
-        "Um grande ciclo que termina e vem outro": "Gato",
-        "Uma flecha que leva ao inevitável": "Lobo",
-        "Irrelevante": "Águia"
-    },
-    "Se eu fosse bilionário...": {
-        "Faria doações para muitas entidades": "Gato",
-        "Criaria uma poupança avantajada": "Lobo",
-        "Faria o que desse na cabeça": "Águia",
-        "Exibiria bastante com algumas pessoas": "Tubarão"
-    },
-    "Eu acredito que...": {
-        "O destino é mais importante que a jornada": "Tubarão",
-        "A jornada é mais importante que o destino": "Gato",
-        "Bastam um navio e uma estrela para navegar": "Águia",
-        "Um centavo economizado é um centavo ganho": "Lobo"
-    },
-    "Eu acredito também que...": {
-        "Aquele que hesita está perdido": "Tubarão",
-        "De Grão em Grão a galinha enche o papo": "Lobo",
-        "O que vai, volta": "Gato",
-        "Um sorriso ou uma careta é igual para quem é cego": "Águia"
-    },
-    "Eu acredito ainda que...": {
-        "É melhor prudência do que arrependimento": "Lobo",
-        "A autoridade deve ser desafiada": "Águia",
-        "Ganhar é fundamental": "Tubarão",
-        "O coletivo é mais importante do que o individual": "Gato"
-    },
-    "Eu acho que...": {
-        "Não é facil ficar cercado e pressionado": "Águia",
-        "É preferivel olhar, antes de pular": "Lobo",
-        "Duas cabeças pensam melhor do que uma": "Gato",
-        "Se você não tem condições de competir, não compita": "Tubarão"
-    }
+    "Eu sou": {"Idealista, criativo e visionário": "Águia", "Divertido, espiritual e benéfico": "Gato", "Confiável, meticuloso e previsível": "Lobo", "Focado, determinado e persistente": "Tubarão"},
+    "Eu gosto de ...": {"Ser piloto, o condutor": "Tubarão", "Conversar com os passageiros": "Gato", "Planejar a viajem": "Lobo", "Explorar novas rotas": "Águia"},
+    "Se você quiser se dar bem comigo....": {"Me dê liberdade": "Águia", "Me deixe saber sua expectativa": "Lobo", "Lidere, siga ou saia do meu caminho": "Tubarão", "Seja amigável, carinhoso e compreensivo": "Gato"},
+    "Para conseguir obter bons resultados é preciso...": {"Ter incertezas": "Águia", "Controlar o fundamental": "Lobo", "Diversão e comemoração": "Gato", "Planejar e obter os recursos para executar": "Tubarão"},
+    "Eu me divirto quando...": {"Estou me exercitando": "Tubarão", "Tenho novidades": "Águia", "Estou com os outros": "Gato", "Determino as regras": "Lobo"},
+    "Eu penso que...": {"Unidos venceremos, divididos perderemos": "Gato", "O ataque é melhor que a defesa": "Tubarão", "É bom ser manso, mas andar com um porrete": "Águia", "Um homem prevenido vale por dois": "Lobo"},
+    "Minha preocupação é...": {"Gerar uma idéia global da situação": "Águia", "Fazer com que as pessoas gostem": "Gato", "Fazer com que a coisa funcione": "Lobo", "Fazer com que aconteça": "Tubarão"},
+    "Eu escolho...": {"Perguntas ao invés de respostas": "Águia", "Ter todos os detalhes": "Lobo", "Vantagens a meu favor": "Tubarão", "Que todos tenham a chance de serem escutados": "Gato"},
+    "Eu prefiro.": {"Fazer progressos": "Tubarão", "Construir memórias": "Gato", "Fazer sentido": "Lobo", "Tornar as pessoas confortáveis": "Águia"},
+    "Eu gosto de chegar...": {"Na frente": "Tubarão", "Junto": "Gato", "Na hora": "Lobo", "Em outro lugar": "Águia"},
+    "Um ótimo dia para mim é quando...": {"Consigo fazer muitas coisas": "Tubarão", "Me divirto com meus amigos": "Gato", "Tudo segue conforme planejado": "Lobo", "Desfruto de coisas novas e estimulantes": "Águia"},
+    "Eu vejo a morte como...": {"Uma grande aventura misteriosa": "Águia", "Oportunidade para rever os falecidos": "Gato", "Um modo de receber recompensas": "Lobo", "Algo que sempre chega muito cedo": "Tubarão"},
+    "Minha Filosofia de vida é...": {"Há ganhadores e perdedores, e eu sou um ganhador": "Tubarão", "Para eu ganhar, ninguém precisa perder": "Gato", "Para ganhar é preciso seguir as regras": "Lobo", "Para ganhar, é necessário inventar novas regras": "Águia"},
+    "Eu sempre gostei de...": {"Explorar algo novo": "Águia", "Evitar surpresas": "Lobo", "Focalizar uma meta": "Tubarão", "Deixar acontecer naturalmente": "Gato"},
+    "Eu gosto de mudanças se...": {"Me der mais liberdade e variedade": "Águia", "Melhorar ou me der mais controle da situação": "Lobo", "For divertido e puder ser compartilhado": "Gato", "Me der uma vantagem competitiva": "Tubarão"},
+    "Não existe nada de errado em...": {"Se colocar na frente dos outros": "Tubarão", "Colocar os outros na frente": "Gato", "Ser consistente": "Lobo", "Mudar de idéia": "Águia"},
+    "Eu gosto de buscar conselhos de...": {"Pessoas bem sucedidas": "Tubarão", "Anciões, idosos e conselheiros": "Gato", "Autoridades no assunto": "Lobo", "Lugares, até os mais estranhos": "Águia"},
+    "Meu lema é...": {"Fazer o que precisa ser feito": "Águia", "Fazer bem feito": "Lobo", "Fazer Junto com o grupo": "Gato", "Simplesmente Fazer": "Tubarão"},
+    "Para mim é essencial...": {"Complexidade mesmo que pareça confusa": "Águia", "Ordem e sistematização": "Lobo", "Calor humano e animação": "Gato", "Coisas claras e simples": "Tubarão"},
+    "Tempo para mim é...": {"Algo que detesto desperdiçar": "Tubarão", "Um grande ciclo que termina e vem outro": "Gato", "Uma flecha que leva ao inevitável": "Lobo", "Irrelevante": "Águia"},
+    "Se eu fosse bilionário...": {"Faria doações para muitas entidades": "Gato", "Criaria uma poupança avantajada": "Lobo", "Faria o que desse na cabeça": "Águia", "Exibiria bastante com algumas pessoas": "Tubarão"},
+    "Eu acredito que...": {"O destino é mais importante que a jornada": "Tubarão", "A jornada é mais importante que o destino": "Gato", "Bastam um navio e uma estrela para navegar": "Águia", "Um centavo economizado é um centavo ganho": "Lobo"},
+    "Eu acredito também que...": {"Aquele que hesita está perdido": "Tubarão", "De Grão em Grão a galinha enche o papo": "Lobo", "O que vai, volta": "Gato", "Um sorriso ou uma careta é igual para quem é cego": "Águia"},
+    "Eu acredito ainda que...": {"É melhor prudência do que arrependimento": "Lobo", "A autoridade deve ser desafiada": "Águia", "Ganhar é fundamental": "Tubarão", "O coletivo é mais importante do que o individual": "Gato"},
+    "Eu acho que...": {"Não é facil ficar cercado e pressionado": "Águia", "É preferivel olhar, antes de pular": "Lobo", "Duas cabeças pensam melhor do que uma": "Gato", "Se você não tem condições de competir, não compita": "Tubarão"}
 }
 
 def calcular_perfil_animais(linha):
@@ -296,7 +198,6 @@ def calcular_perfil_animais(linha):
     total_respondido = 0
     
     for pergunta, alternativas in gabarito_comportamental.items():
-        # AQUI ESTAVA O ERRO DE DIGITAÇÃO (line -> linha)
         if pergunta in linha:
             resposta_cand = str(linha.get(pergunta, "")).strip().lower()
             for resp_chave, animal in alternativas.items():
@@ -327,7 +228,34 @@ if tela == "👤 Perfil do Candidato":
     st.title("👤 Avaliação Individual de Perfil")
     st.caption("Mapeamento automatizado extraído em tempo real da base de dados Implantta.")
     
-    candidato_sel = st.selectbox("Selecione o Candidato para analisar os resultados:", lista_candidatos)
+    # Adicionando a barra de Seleção + Botão de Download PDF ao lado
+    col_sel, col_btn = st.columns([3, 1])
+    with col_sel:
+        candidato_sel = st.selectbox("Selecione o Candidato para analisar os resultados:", lista_candidatos)
+    
+    with col_btn:
+        st.write("") # Espaço para alinhar verticalmente com a caixa
+        st.write("")
+        # Botão Inteligente nativo para salvar em PDF
+        components.html("""
+            <button onclick="window.parent.print()" style="
+                background-color: #DDA15E; 
+                color: white; 
+                border: none; 
+                padding: 10px 15px; 
+                border-radius: 5px; 
+                cursor: pointer; 
+                font-family: sans-serif; 
+                font-weight: bold;
+                font-size: 14px;
+                width: 100%;
+                margin-top: 2px;
+                transition: 0.3s;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            " onmouseover="this.style.backgroundColor='#c98d4b'" onmouseout="this.style.backgroundColor='#DDA15E'">
+                📥 Salvar PDF
+            </button>
+        """, height=45)
     
     if df_dados is not None and "Nome" in df_dados.columns and candidato_sel in df_dados["Nome"].values:
         linha_cand = df_dados[df_dados["Nome"] == candidato_sel].iloc[0]
@@ -382,35 +310,28 @@ if tela == "👤 Perfil do Candidato":
             top1_nome, top1_valor = perfis_ordenados[0]
             top2_nome, top2_valor = perfis_ordenados[1]
             
-            # Dicionário dinâmico de características por perfil
             detalhes_perfis = {
                 "Tubarão": {
                     "fortes": "Foco em resultados, iniciativa, senso de urgência, coragem para decidir e alta resiliência sob pressão.",
-                    "fracos": "Dificuldade em delegar, tendência ao autoritarismo, baixa paciência com processos lentos e inclinação a atropelar o planejamento.",
-                    "estilo": "comercial, liderança, posições operacionais de ritmo acelerado ou áreas que demandem metas agressivas."
+                    "fracos": "Dificuldade em delegar, tendência ao autoritarismo, baixa paciência com processos lentos e inclinação a atropelar o planejamento."
                 },
                 "Lobo": {
                     "fortes": "Organização cirúrgica, atenção extrema a detalhes, disciplina, lealdade a regras e alta previsibilidade na entrega.",
-                    "fracos": "Resistência acentuada a mudanças repentinas, perfeccionismo que pode gerar lentidão e dificuldade de agir no improviso.",
-                    "estilo": "controladoria, finanças, contabilidade, processos de qualidade, auditoria ou TI estruturada."
+                    "fracos": "Resistência acentuada a mudanças repentinas, perfeccionismo que pode gerar lentidão e dificuldade de agir no improviso."
                 },
                 "Águia": {
                     "fortes": "Pensamento disruptivo, criatividade, facilidade de adaptação, olhar de longo prazo e entusiasmo para propor inovações.",
-                    "fracos": "Falta de linearidade na execução, propensão a perder o foco antes de concluir tarefas repetitivas e indisciplina com prazos rígidos.",
-                    "estilo": "marketing, desenvolvimento de produtos, estratégias corporativas ou cenários de transformação e inovação."
+                    "fracos": "Falta de linearidade na execução, propensão a perder o foco antes de concluir tarefas repetitivas e indisciplina com prazos rígidos."
                 },
                 "Gato": {
                     "fortes": "Excelente comunicação interpessoal, mediação de conflitos, facilidade para trabalhar em equipe, empatia e construção de harmonia.",
-                    "fracos": "Dificuldade para dar feedbacks duros, tendência a evitar confrontos necessários e vulnerabilidade a ambientes altamente agressivos.",
-                    "estilo": "recursos humanos, atendimento ao cliente, sucesso do cliente (CS), recepção ou áreas de suporte focado em pessoas."
+                    "fracos": "Dificuldade para dar feedbacks duros, tendência a evitar confrontos necessários e vulnerabilidade a ambientes altamente agressivos."
                 }
             }
             
-            # 🔍 MOTOR DE CÁLCULO DE MATCH COM A VAGA
             vaga_lower = str(vaga_alvo).lower()
             tipo_vaga = "Geral"
             
-            # Categorização simplificada da vaga com base em palavras-chave comuns
             if any(k in vaga_lower for k in ["contab", "financ", "fiscal", "lobo", "adm", "process", "ti", "suport", "auditor", "qualidad"]):
                 tipo_vaga = "Processos/Contábil/Analítico"
                 perfis_ideais = ["Lobo", "Tubarão"]
@@ -424,10 +345,8 @@ if tela == "👤 Perfil do Candidato":
                 tipo_vaga = "Estratégico/Geral"
                 perfis_ideais = [top1_nome, top2_nome]
                 
-            # Verifica a convergência
             convergente = (top1_nome in perfis_ideais)
             
-            # Montagem dinâmica do parecer estratégico
             st.markdown(f"**Distribuição de Perfis:** Predominância Primária de **{top1_nome}** ({top1_valor}%) com suporte Secundário de **{top2_nome}** ({top2_valor}%).")
             
             with st.expander("⭐ Pontos Fortes do Candidato", expanded=True):
@@ -497,13 +416,14 @@ if tela == "👤 Perfil do Candidato":
             st.plotly_chart(fig, use_container_width=True)
             
         with col_pnl2:
-            st.subheader("🧠 Canais de Captação & Abordagem")
-            st.info("💡 **Dica de Entrevista:** Use a predominância de PNL para moldar as suas perguntas.")
+            st.subheader("🧠 Canais de Captação & Manual de Relacionamento")
+            st.info("💡 **Dica de Interação:** Use a predominância de PNL para guiar a comunicação.")
             
+            # 🔥 TEXTO ATUALIZADO AQUI
             st.markdown(f"""
-            Como o candidato possui o canal **{predominante_pnl}** mais elevado, a melhor tática para o consultor da Implantta durante a fase presencial é:
-            * **Se for Visual:** Use termos como *"Veja bem"*, *"Imagine esse cenário"*. Mantenha contato visual fixo.
-            * **Se for Auditivo:** Module bem o tom de voz, evite ruídos no ambiente. Use *"Ouça o raciocínio"*.
+            Como o candidato possui o canal **{predominante_pnl}** mais elevado, em momentos de interação, seja na entrevista de emprego ou no dia a dia caso contratado, aja da seguinte forma:
+            * **Se for Visual:** Use termos como *"Veja bem"*, *"Imagine esse cenário"*. Mantenha contato visual fixo e apoie-se em gráficos ou imagens.
+            * **Se for Auditivo:** Module bem o tom de voz, evite ruídos no ambiente. Use frases como *"Ouça o raciocínio"*, *"Me conte mais"*.
             * **Se for Cinestésico:** Crie um clima confortável, dê espaço para ele falar sobre sensações e experiências práticas.
             * **Se for Digital:** Apresente números, fatos incontestáveis, lógica estruturada e não tente apelar apenas para o lado emocional.
             """)
