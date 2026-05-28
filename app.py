@@ -45,10 +45,16 @@ st.markdown("""
         iframe { display: none !important; } 
         div[data-testid="stSelectbox"] { display: none !important; }
 
+        /* Tira margens excessivas do topo e laterais no PDF */
+        .block-container {
+            padding-top: 1rem !important;
+            padding-bottom: 1rem !important;
+        }
+
         /* IMPEDE QUE OS GRÁFICOS E CAIXAS SEJAM CORTADOS AO MEIO NA PÁGINA */
-        .stPlotlyChart { page-break-inside: avoid !important; margin-bottom: 30px; }
+        .stPlotlyChart { page-break-inside: avoid !important; margin-bottom: 15px; }
         .stMarkdown { page-break-inside: avoid !important; }
-        [data-testid="stExpander"] { page-break-inside: avoid !important; margin-bottom: 20px; }
+        [data-testid="stExpander"] { page-break-inside: avoid !important; margin-bottom: 10px; }
         [data-testid="stHorizontalBlock"] { page-break-inside: avoid !important; }
         
         /* Força a impressão das cores corporativas */
@@ -210,19 +216,20 @@ else:
 # =====================================================================
 if tela == "👤 Perfil do Candidato":
     
-    # 🌟 NOVO CABEÇALHO COM A LOGO (Adicionado para dar o ar corporativo ao PDF)
-    col_logo, col_titulo = st.columns([1, 4])
-    with col_logo:
-        try:
-            # A logo vai aparecer lindamente no canto superior esquerdo
-            st.image("Versão Melhorada da Marca.png", use_container_width=True)
-        except:
-            pass # Se a logo não carregar, não quebra a página
-            
+    # 🌟 NOVO CABEÇALHO (Logo maior e na Direita)
+    col_titulo, col_logo = st.columns([3.5, 1.5])
+    
     with col_titulo:
         st.title("👤 Relatório de Engenharia de Perfil")
         st.caption("Mapeamento automatizado extraído em tempo real pela Implantta Consultoria.")
         
+    with col_logo:
+        try:
+            # A logo vai aparecer à direita e com tamanho mais encorpado pelas proporções da coluna
+            st.image("Versão Melhorada da Marca.png", use_container_width=True)
+        except:
+            pass
+            
     st.markdown("---")
     
     # Seleção de Candidato
@@ -230,7 +237,7 @@ if tela == "👤 Perfil do Candidato":
     with col_sel:
         candidato_sel = st.selectbox("Selecione o Candidato para analisar os resultados:", lista_candidatos)
     
-    # 🌟 BOTÃO INTELIGENTE DE DOWNLOAD (Garante o Título Dinâmico do Arquivo PDF)
+    # 🌟 BOTÃO INTELIGENTE DE DOWNLOAD (Garante o Título Dinâmico)
     with col_btn:
         st.write("")
         st.write("")
@@ -299,7 +306,13 @@ if tela == "👤 Perfil do Candidato":
                 hole=0.4
             )
             fig_animais.update_traces(textposition='inside', textinfo='percent+label')
-            fig_animais.update_layout(showlegend=False, margin=dict(t=10, b=10, l=10, r=10))
+            
+            # ✨ GRÁFICO MAIS ACHATADO PARA CABER NO PDF (height=280)
+            fig_animais.update_layout(
+                height=280, 
+                showlegend=False, 
+                margin=dict(t=10, b=10, l=10, r=10)
+            )
             st.plotly_chart(fig_animais, use_container_width=True)
             
         with col_animais2:
@@ -413,7 +426,13 @@ if tela == "👤 Perfil do Candidato":
                 template="streamlit",
                 color_discrete_map=cores_canais
             )
-            fig.update_layout(showlegend=False, margin=dict(t=10, b=10, l=10, r=10))
+            
+            # ✨ GRÁFICO MAIS ACHATADO PARA CABER NO PDF (height=250)
+            fig.update_layout(
+                height=250, 
+                showlegend=False, 
+                margin=dict(t=10, b=10, l=10, r=10)
+            )
             st.plotly_chart(fig, use_container_width=True)
             
         with col_pnl2:
