@@ -60,7 +60,13 @@ st.markdown("""
             margin-top: 0rem !important;
         }
 
-        /* Compacta os espaços entre os blocos no PDF */
+        /* 🚨 NOVO AJUSTE: Impede títulos órfãos no final da folha */
+        h1, h2, h3, h4, h5, h6 {
+            page-break-after: avoid !important;
+            margin-bottom: 5px !important;
+        }
+
+        /* Compacta os espaços e protege gráficos */
         div[data-testid="stVerticalBlock"] { gap: 0rem !important; }
         .stPlotlyChart { page-break-inside: avoid !important; margin-bottom: 0px !important; }
         [data-testid="stExpander"] { page-break-inside: avoid !important; margin-bottom: 0px !important; }
@@ -306,7 +312,6 @@ if tela == "👤 Perfil do Candidato":
             )
             fig_animais.update_traces(textposition='inside', textinfo='percent+label')
             
-            # ✨ GRÁFICO MAIS COMPACTO PARA ENCAIXAR PERFEITO (height=260 e margens zeradas)
             fig_animais.update_layout(
                 height=260, 
                 showlegend=False, 
@@ -370,35 +375,37 @@ if tela == "👤 Perfil do Candidato":
 
         st.markdown("<br>", unsafe_allow_html=True)
 
-        st.markdown("#### 🎯 Alinhamento com a Função & Conclusão")
-        
-        predominante_pnl = max(valores_canais, key=valores_canais.get)
-        pnl_detalhes = {
-            "Visual": "processa informações em alta velocidade, ideal para rotinas dinâmicas e de alta carga visual.",
-            "Auditivo": "excelente para posições que exigem escuta ativa, diálogo e forte negociação verbal.",
-            "Cinestésico": "melhor aproveitado em funções práticas, que envolvem contato, intuição e estabilidade.",
-            "Digital (Lógico)": "altamente analítico, ideal para cenários que exigem validação de dados, fatos e lógica fria."
-        }
-        
-        col_concl1, col_concl2 = st.columns([1.5, 1])
-        with col_concl1:
-            st.markdown(f"""
-            **Engenharia de Cargo:** A vaga indicada (**{vaga_alvo}**) possui características do tipo *{tipo_vaga}*. Para este cenário, os perfis recomendados são **{', '.join(perfis_ideais)}**.
+        # 🚨 NOVO CONTÊINER AGRUPADOR (Mantém o título colado ao texto no PDF)
+        with st.container():
+            st.markdown("#### 🎯 Alinhamento com a Função & Conclusão")
             
-            O candidato combina essa estrutura comportamental com um canal representacional predominantemente **{predominante_pnl}**, o que significa que ele {pnl_detalhes[predominante_pnl]}
-            """)
+            predominante_pnl = max(valores_canais, key=valores_canais.get)
+            pnl_detalhes = {
+                "Visual": "processa informações em alta velocidade, ideal para rotinas dinâmicas e de alta carga visual.",
+                "Auditivo": "excelente para posições que exigem escuta ativa, diálogo e forte negociação verbal.",
+                "Cinestésico": "melhor aproveitado em funções práticas, que envolvem contato, intuição e estabilidade.",
+                "Digital (Lógico)": "altamente analítico, ideal para cenários que exigem validação de dados, fatos e lógica fria."
+            }
             
-        with col_concl2:
-            if convergente:
-                st.success("✅ RECOMENDAÇÃO: **CONTRATAR**")
-                st.caption("🏆 **Justificativa:** Alta aderência comportamental com o escopo da vaga e o estilo de raciocínio técnico exigido.")
-            else:
-                if top2_nome in perfis_ideais:
-                    st.warning("🟡 RECOMENDAÇÃO: **AVALIAR COM RESSALVAS**")
-                    st.caption("👀 **Justificativa:** O perfil principal difere do esperado, mas o secundário equilibra. Focar entrevista nos pontos fracos.")
+            col_concl1, col_concl2 = st.columns([1.5, 1])
+            with col_concl1:
+                st.markdown(f"""
+                **Engenharia de Cargo:** A vaga indicada (**{vaga_alvo}**) possui características do tipo *{tipo_vaga}*. Para este cenário, os perfis recomendados são **{', '.join(perfis_ideais)}**.
+                
+                O candidato combina essa estrutura comportamental com um canal representacional predominantemente **{predominante_pnl}**, o que significa que ele {pnl_detalhes[predominante_pnl]}
+                """)
+                
+            with col_concl2:
+                if convergente:
+                    st.success("✅ RECOMENDAÇÃO: **CONTRATAR**")
+                    st.caption("🏆 **Justificativa:** Alta aderência comportamental com o escopo da vaga e o estilo de raciocínio técnico exigido.")
                 else:
-                    st.error("❌ RECOMENDAÇÃO: **DESALINHADO À VAGA**")
-                    st.caption("🚨 **Justificativa:** Desalinhamento natural entre a energia comportamental do candidato e as rotinas diárias da função.")
+                    if top2_nome in perfis_ideais:
+                        st.warning("🟡 RECOMENDAÇÃO: **AVALIAR COM RESSALVAS**")
+                        st.caption("👀 **Justificativa:** O perfil principal difere do esperado, mas o secundário equilibra. Focar entrevista nos pontos fracos.")
+                    else:
+                        st.error("❌ RECOMENDAÇÃO: **DESALINHADO À VAGA**")
+                        st.caption("🚨 **Justificativa:** Desalinhamento natural entre a energia comportamental do candidato e as rotinas diárias da função.")
                     
         st.markdown("---")
         
@@ -422,7 +429,6 @@ if tela == "👤 Perfil do Candidato":
                 color_discrete_map=cores_canais
             )
             
-            # ✨ GRÁFICO COMPACTO (height=240 e margens zeradas)
             fig.update_layout(
                 height=240, 
                 showlegend=False, 
