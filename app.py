@@ -401,7 +401,6 @@ if tela == "👤 Perfil do Candidato":
         with col_pnl1:
             st.subheader("📊 Sistema Representacional (PNL)")
             
-            # Aqui estava o pequeno erro anterior (agora corrigido com quebras de linha!)
             df_chart = pd.DataFrame({
                 "Canal": list(valores_canais.keys()), 
                 "Percentagem (%)": list(valores_canais.values())
@@ -423,4 +422,50 @@ if tela == "👤 Perfil do Candidato":
             st.subheader("🧠 Parecer de Engenharia de Perfil")
             st.success("📝 **Status:** Dados integrados e tabulados via API com sucesso.")
             
-            predominante_pnl =
+            predominante_pnl = max(
+                valores_canais, 
+                key=valores_canais.get
+            )
+            
+            st.markdown(f"""
+            O candidato apresenta um canal de captação predominantemente **{predominante_pnl}** ({valores_canais[predominante_pnl]}%).
+            
+            **Dicas de Abordagem para o Consultor:**
+            * O gráfico ao lado representa a distribuição exata de energia de captação de estímulos do candidato.
+            * Use essa informação para estruturar dinâmicas de entrevista alinhadas com a velocidade de processamento dele.
+            """)
+            
+            st.markdown("---")
+            with st.expander("🔍 Ver Respostas Brutas do Teste Comportamental (Texto)"):
+                perguntas_texto = list(gabarito_comportamental.keys())
+                for p in perguntas_texto:
+                    if p in linha_cand:
+                        st.markdown(f"**{p}**")
+                        st.code(linha_cand[p])
+
+# =====================================================================
+# TELA 2: DASHBOARD GERAL
+# =====================================================================
+elif tela == "📊 Dashboard Geral":
+    st.title("📊 Painel Geral de Recrutamento")
+    st.markdown("Monitoramento macro e fluxo de entrada da planilha do Google Drive.")
+    
+    total_candidatos = len(lista_candidatos) if df_dados is not None and "Nome" in df_dados.columns else 0
+    
+    col1, col2, col3 = st.columns(3)
+    col1.metric(label="Total de Candidatos Avaliados", value=total_candidatos)
+    col2.metric("Conexão Google Drive", "Ativa e Segura" if df_dados is not None else "Inativa")
+    col3.metric("Atualização Automática", "A cada 30s")
+    
+    if df_dados is not None and "Nome" in df_dados.columns:
+        st.markdown("### 📋 Fluxo de Respostas Mais Recentes")
+        
+        colunas_exibicao = []
+        for col in ["Carimbo de data/hora", "Nome", "Empresa", "Setor"]:
+            if col in df_dados.columns:
+                colunas_exibicao.append(col)
+                
+        if colunas_exibicao:
+            st.dataframe(df_dados[colunas_exibicao])
+        else:
+            st.dataframe(df_dados)
