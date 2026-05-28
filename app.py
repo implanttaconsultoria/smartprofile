@@ -21,11 +21,11 @@ st.set_page_config(
 )
 
 # =====================================================================
-# 🎨 ESTILOS VISUAIS CUSTOMIZADOS (CSS) E MODO IMPRESSÃO (PDF)
+# 🎨 ESTILOS VISUAIS CUSTOMIZADOS (CSS) E MOTOR DE PDF AVANÇADO
 # =====================================================================
 st.markdown("""
     <style>
-    /* 1. Ajuste da Caixa de Seleção: Fundo Azul e Fonte Branca */
+    /* Ajuste da Caixa de Seleção: Fundo Azul e Fonte Branca */
     div[data-baseweb="select"] > div {
         background-color: #2B5C8F !important;
         color: white !important;
@@ -35,20 +35,34 @@ st.markdown("""
         color: white !important;
     }
     
-    /* 2. Ocultar elementos desnecessários na hora de gerar o PDF */
+    /* Configurações Estritas para a Geração do PDF Perfeito */
     @media print {
+        /* Oculta interface do sistema */
         section[data-testid="stSidebar"] { display: none !important; }
         header[data-testid="stHeader"] { display: none !important; }
         .stRadio { display: none !important; }
         div.stButton { display: none !important; }
-        iframe { display: none !important; } /* Esconde o iframe do botão de imprimir no PDF */
+        iframe { display: none !important; } 
+        div[data-testid="stSelectbox"] { display: none !important; }
+
+        /* IMPEDE QUE OS GRÁFICOS E CAIXAS SEJAM CORTADOS AO MEIO NA PÁGINA */
+        .stPlotlyChart { page-break-inside: avoid !important; margin-bottom: 30px; }
+        .stMarkdown { page-break-inside: avoid !important; }
+        [data-testid="stExpander"] { page-break-inside: avoid !important; margin-bottom: 20px; }
+        [data-testid="stHorizontalBlock"] { page-break-inside: avoid !important; }
+        
+        /* Força a impressão das cores corporativas */
+        * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
     }
     </style>
 """, unsafe_allow_html=True)
 
-# ---- BARRA LATERAL (MENU E LOGO) ----
+# ---- BARRA LATERAL (MENU) ----
 try:
-    st.sidebar.image("logo_branca.png", use_container_width=True)
+    st.sidebar.image("Versão Melhorada da Marca.png", use_container_width=True)
 except:
     st.sidebar.subheader("🌱 Implantta Consultoria")
 
@@ -112,34 +126,10 @@ df_dados = carregar_dados_planilha()
 # 🧮 1. PROCESSAMENTO PNL
 # =====================================================================
 def calcular_sistema_representacional(linha):
-    colunas_visual = [
-        "Eu tomo decisões importantes baseados em: [o que me parece melhor]", 
-        "Durante uma discussão eu sou mais influenciado por: [se eu posso ou não ver o argumento da outra pessoa]", 
-        "Eu comunico mais facilmente o que se passa comigo: [do modo como me visto e aparento]", 
-        "É muito fácil para mim: [escolher as combinações de cores mais ricas e atraentes]", 
-        "Eu me percebo assim: [eu respondo fortemente às cores e à aparência de uma sala]"
-    ]
-    colunas_auditivo = [
-        "Eu tomo decisões importantes baseados em: [o que melhor me soar melhor]", 
-        "Durante uma discussão eu sou mais influenciado por: [tom de voz da outra pessoa]", 
-        "Eu comunico mais facilmente o que se passa comigo: [pelo tom da minha voz]", 
-        "É muito fácil para mim: [achar o volume e a sintonia ideais num sistema de som]", 
-        "Eu me percebo assim: [Se estou muito em sintonia com os sons do ambiente]"
-    ]
-    colunas_cinestesico = [
-        "Eu tomo decisões importantes baseados em: [intuição]", 
-        "Durante uma discussão eu sou mais influenciado por: [se eu entro em contato ou não com os sentimentos reais do outro]", 
-        "Eu comunico mais facilmente o que se passa comigo: [pelos sentimentos que compartilho]", 
-        "É muito fácil para mim: [escolher os móveis mais confortáveis]", 
-        "Eu me percebo assim: [eu sou muito sensível à maneira como a roupa veste o meu corpo]"
-    ]
-    colunas_digital = [
-        "Eu tomo decisões importantes baseados em: [um estudo preciso e minucioso do assunto]", 
-        "Durante uma discussão eu sou mais influenciado por: [a lógica do argumento da outra pessoa]", 
-        "Eu comunico mais facilmente o que se passa comigo: [pelas palavras que escolho]", 
-        "É muito fácil para mim: [selecionar o ponto mais relevante relativo a um assunto interessante]", 
-        "Eu me percebo assim: [se sou muito capaz de raciocinar com fatos e dados novos]"
-    ]
+    colunas_visual = ["Eu tomo decisões importantes baseados em: [o que me parece melhor]", "Durante uma discussão eu sou mais influenciado por: [se eu posso ou não ver o argumento da outra pessoa]", "Eu comunico mais facilmente o que se passa comigo: [do modo como me visto e aparento]", "É muito fácil para mim: [escolher as combinações de cores mais ricas e atraentes]", "Eu me percebo assim: [eu respondo fortemente às cores e à aparência de uma sala]"]
+    colunas_auditivo = ["Eu tomo decisões importantes baseados em: [o que melhor me soar melhor]", "Durante uma discussão eu sou mais influenciado por: [tom de voz da outra pessoa]", "Eu comunico mais facilmente o que se passa comigo: [pelo tom da minha voz]", "É muito fácil para mim: [achar o volume e a sintonia ideais num sistema de som]", "Eu me percebo assim: [Se estou muito em sintonia com os sons do ambiente]"]
+    colunas_cinestesico = ["Eu tomo decisões importantes baseados em: [intuição]", "Durante uma discussão eu sou mais influenciado por: [se eu entro em contato ou não com os sentimentos reais do outro]", "Eu comunico mais facilmente o que se passa comigo: [pelos sentimentos que compartilho]", "É muito fácil para mim: [escolher os móveis mais confortáveis]", "Eu me percebo assim: [eu sou muito sensível à maneira como a roupa veste o meu corpo]"]
+    colunas_digital = ["Eu tomo decisões importantes baseados em: [um estudo preciso e minucioso do assunto]", "Durante uma discussão eu sou mais influenciado por: [a lógica do argumento da outra pessoa]", "Eu comunico mais facilmente o que se passa comigo: [pelas palavras que escolho]", "É muito fácil para mim: [selecionar o ponto mais relevante relativo a um assunto interessante]", "Eu me percebo assim: [se sou muito capaz de raciocinar com fatos e dados novos]"]
     
     v_score = sum([pd.to_numeric(linha.get(col, 0), errors='coerce') for col in colunas_visual])
     a_score = sum([pd.to_numeric(linha.get(col, 0), errors='coerce') for col in colunas_auditivo])
@@ -154,12 +144,7 @@ def calcular_sistema_representacional(linha):
     total = v_score + a_score + c_score + d_score
     
     if total > 0:
-        return {
-            "Visual": round((v_score / total) * 100, 1), 
-            "Auditivo": round((a_score / total) * 100, 1), 
-            "Cinestésico": round((c_score / total) * 100, 1), 
-            "Digital (Lógico)": round((d_score / total) * 100, 1)
-        }
+        return {"Visual": round((v_score / total) * 100, 1), "Auditivo": round((a_score / total) * 100, 1), "Cinestésico": round((c_score / total) * 100, 1), "Digital (Lógico)": round((d_score / total) * 100, 1)}
     return {"Visual": 25.0, "Auditivo": 25.0, "Cinestésico": 25.0, "Digital (Lógico)": 25.0}
 
 # =====================================================================
@@ -215,7 +200,6 @@ def calcular_perfil_animais(linha):
         
     return percentuais
 
-# ---- DEFINIÇÃO DE LISTA DE CANDIDATOS ----
 if df_dados is not None and "Nome" in df_dados.columns:
     lista_candidatos = df_dados["Nome"].unique()
 else:
@@ -225,37 +209,57 @@ else:
 # TELA 1: PERFIL DO CANDIDATO
 # =====================================================================
 if tela == "👤 Perfil do Candidato":
-    st.title("👤 Avaliação Individual de Perfil")
-    st.caption("Mapeamento automatizado extraído em tempo real da base de dados Implantta.")
     
-    # Adicionando a barra de Seleção + Botão de Download PDF ao lado
+    # 🌟 NOVO CABEÇALHO COM A LOGO (Adicionado para dar o ar corporativo ao PDF)
+    col_logo, col_titulo = st.columns([1, 4])
+    with col_logo:
+        try:
+            # A logo vai aparecer lindamente no canto superior esquerdo
+            st.image("Versão Melhorada da Marca.png", use_container_width=True)
+        except:
+            pass # Se a logo não carregar, não quebra a página
+            
+    with col_titulo:
+        st.title("👤 Relatório de Engenharia de Perfil")
+        st.caption("Mapeamento automatizado extraído em tempo real pela Implantta Consultoria.")
+        
+    st.markdown("---")
+    
+    # Seleção de Candidato
     col_sel, col_btn = st.columns([3, 1])
     with col_sel:
         candidato_sel = st.selectbox("Selecione o Candidato para analisar os resultados:", lista_candidatos)
     
+    # 🌟 BOTÃO INTELIGENTE DE DOWNLOAD (Garante o Título Dinâmico do Arquivo PDF)
     with col_btn:
-        st.write("") # Espaço para alinhar verticalmente com a caixa
         st.write("")
-        # Botão Inteligente nativo para salvar em PDF
-        components.html("""
-            <button onclick="window.parent.print()" style="
-                background-color: #DDA15E; 
-                color: white; 
-                border: none; 
-                padding: 10px 15px; 
-                border-radius: 5px; 
-                cursor: pointer; 
-                font-family: sans-serif; 
-                font-weight: bold;
-                font-size: 14px;
-                width: 100%;
-                margin-top: 2px;
-                transition: 0.3s;
-                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            " onmouseover="this.style.backgroundColor='#c98d4b'" onmouseout="this.style.backgroundColor='#DDA15E'">
-                📥 Salvar PDF
-            </button>
-        """, height=45)
+        st.write("")
+        
+        script_pdf = f"""
+        <script>
+            function imprimirRelatorio() {{
+                try {{
+                    var doc = window.parent.document;
+                    var tituloAntigo = doc.title;
+                    // Altera o título do navegador temporariamente para salvar o PDF com o nome correto
+                    doc.title = "MapeiaAI - Implantta Consultoria - {candidato_sel}";
+                    window.parent.print();
+                    // Retorna ao título original após 2 segundos
+                    setTimeout(function() {{ doc.title = tituloAntigo; }}, 2000);
+                }} catch(e) {{
+                    window.print();
+                }}
+            }}
+        </script>
+        <button onclick="imprimirRelatorio()" style="
+            background-color: #DDA15E; color: white; border: none; padding: 10px 15px; 
+            border-radius: 5px; cursor: pointer; font-family: sans-serif; font-weight: bold;
+            font-size: 14px; width: 100%; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.3s;
+        " onmouseover="this.style.backgroundColor='#c98d4b'" onmouseout="this.style.backgroundColor='#DDA15E'">
+            📥 Salvar PDF do Candidato
+        </button>
+        """
+        components.html(script_pdf, height=45)
     
     if df_dados is not None and "Nome" in df_dados.columns and candidato_sel in df_dados["Nome"].values:
         linha_cand = df_dados[df_dados["Nome"] == candidato_sel].iloc[0]
@@ -268,22 +272,17 @@ if tela == "👤 Perfil do Candidato":
         valores_canais = calcular_sistema_representacional(linha_cand)
         valores_animais = calcular_perfil_animais(linha_cand)
         
-        st.markdown("---")
-        
+        # CARD DE INFORMAÇÕES DO CANDIDATO
         col_a, col_b, col_c, col_d = st.columns(4)
-        with col_a:
-            st.info(f"**Vaga / Função:**\n\n{vaga_alvo}")
-        with col_b:
-            st.info(f"**Empresa Solicitante:**\n\n{empresa_alvo}")
-        with col_c:
-            st.info(f"**E-mail de Contato:**\n\n{email_cand}")
-        with col_d:
-            st.info(f"**Data de Aplicação:**\n\n{data_teste}")
+        col_a.info(f"**Candidato:**\n\n**{candidato_sel}**")
+        col_b.info(f"**Vaga / Função:**\n\n{vaga_alvo}")
+        col_c.info(f"**Empresa:**\n\n{empresa_alvo}")
+        col_d.info(f"**Data da Aplicação:**\n\n{data_teste}")
             
         st.markdown("<br>", unsafe_allow_html=True)
         
         # 🟢 SEÇÃO 1: TESTE DOS ANIMAIS
-        st.markdown("### 🦁 Teste de Perfil Comportamental (Predominância)")
+        st.markdown("### 🦁 Perfil Comportamental Predominante")
         col_animais1, col_animais2 = st.columns([1, 1.2])
         
         with col_animais1:
@@ -304,7 +303,7 @@ if tela == "👤 Perfil do Candidato":
             st.plotly_chart(fig_animais, use_container_width=True)
             
         with col_animais2:
-            st.markdown("#### 📊 Parecer Comportamental Avançado")
+            st.markdown("#### 📊 Parecer Analítico")
             
             perfis_ordenados = sorted(valores_animais.items(), key=lambda x: x[1], reverse=True)
             top1_nome, top1_valor = perfis_ordenados[0]
@@ -359,8 +358,10 @@ if tela == "👤 Perfil do Candidato":
                 if top2_valor > 15:
                     st.write(f"• **Riscos de {top2_nome}:** {detalhes_perfis[top2_nome]['fracos']}")
 
+        st.markdown("<br>", unsafe_allow_html=True)
+
         # 🎯 BLOCO DA CONCLUSÃO E RECOMENDAÇÃO FINAL
-        st.markdown("#### 🎯 Alinhamento com a Função & Conclusão do Consultor")
+        st.markdown("#### 🎯 Alinhamento com a Função & Conclusão")
         
         predominante_pnl = max(valores_canais, key=valores_canais.get)
         pnl_detalhes = {
@@ -373,22 +374,22 @@ if tela == "👤 Perfil do Candidato":
         col_concl1, col_concl2 = st.columns([1.5, 1])
         with col_concl1:
             st.markdown(f"""
-            **Análise de Engenharia de Cargo:** A vaga indicada (**{vaga_alvo}**) possui características de ambiente do tipo *{tipo_vaga}*. Para este cenário, os perfis comportamentais mais recomendados na Engenharia de Perfil são **{', '.join(perfis_ideais)}**.
+            **Engenharia de Cargo:** A vaga indicada (**{vaga_alvo}**) possui características do tipo *{tipo_vaga}*. Para este cenário, os perfis recomendados são **{', '.join(perfis_ideais)}**.
             
             O candidato combina essa estrutura comportamental com um canal representacional predominantemente **{predominante_pnl}**, o que significa que ele {pnl_detalhes[predominante_pnl]}
             """)
             
         with col_concl2:
             if convergente:
-                st.metric(label="RECOMENDAÇÃO FINAL", value="✅ CONTRATAR")
-                st.caption("🏆 **Justificativa:** Alta aderência comportamental com o escopo da vaga e o estilo de raciocínio técnico exigido pela função.")
+                st.success("✅ RECOMENDAÇÃO: **CONTRATAR**")
+                st.caption("🏆 **Justificativa:** Alta aderência comportamental com o escopo da vaga e o estilo de raciocínio técnico exigido.")
             else:
                 if top2_nome in perfis_ideais:
-                    st.metric(label="RECOMENDAÇÃO FINAL", value="🟡 CONTRATAR COM RESERVAS")
-                    st.caption("👀 **Justificativa:** O perfil principal difere do esperado, mas o perfil secundário equilibra as competências técnicas. Recomendado focar a entrevista técnica nos pontos de atenção.")
+                    st.warning("🟡 RECOMENDAÇÃO: **AVALIAR COM RESSALVAS**")
+                    st.caption("👀 **Justificativa:** O perfil principal difere do esperado, mas o secundário equilibra. Focar entrevista nos pontos fracos.")
                 else:
-                    st.metric(label="RECOMENDAÇÃO FINAL", value="❌ AVALIAR OUTROS PERFIS")
-                    st.caption("🚨 **Justificativa:** Desalinhamento natural entre a energia comportamental predominante do candidato e as rotinas diárias da função.")
+                    st.error("❌ RECOMENDAÇÃO: **DESALINHADO À VAGA**")
+                    st.caption("🚨 **Justificativa:** Desalinhamento natural entre a energia comportamental do candidato e as rotinas diárias da função.")
                     
         st.markdown("---")
         
@@ -416,20 +417,19 @@ if tela == "👤 Perfil do Candidato":
             st.plotly_chart(fig, use_container_width=True)
             
         with col_pnl2:
-            st.subheader("🧠 Canais de Captação & Manual de Relacionamento")
-            st.info("💡 **Dica de Interação:** Use a predominância de PNL para guiar a comunicação.")
+            st.subheader("🧠 Manual de Relacionamento (Liderança)")
+            st.info("💡 **Dica para a Gestão:** Use o canal predominante para guiar a comunicação diária com o colaborador.")
             
-            # 🔥 TEXTO ATUALIZADO AQUI
             st.markdown(f"""
-            Como o candidato possui o canal **{predominante_pnl}** mais elevado, em momentos de interação, seja na entrevista de emprego ou no dia a dia caso contratado, aja da seguinte forma:
-            * **Se for Visual:** Use termos como *"Veja bem"*, *"Imagine esse cenário"*. Mantenha contato visual fixo e apoie-se em gráficos ou imagens.
-            * **Se for Auditivo:** Module bem o tom de voz, evite ruídos no ambiente. Use frases como *"Ouça o raciocínio"*, *"Me conte mais"*.
-            * **Se for Cinestésico:** Crie um clima confortável, dê espaço para ele falar sobre sensações e experiências práticas.
-            * **Se for Digital:** Apresente números, fatos incontestáveis, lógica estruturada e não tente apelar apenas para o lado emocional.
+            Como o candidato possui o canal **{predominante_pnl}** mais elevado, em interações de feedback, treinamento ou alinhamento de metas, aja da seguinte forma:
+            * **Se for Visual:** Use termos como *"Veja bem"*, *"Imagine esse cenário"*. Mantenha contato visual e apoie-se em apresentações gráficas.
+            * **Se for Auditivo:** Module o tom de voz, evite dar ordens em ambientes barulhentos. Use *"Me conte o que acha"*.
+            * **Se for Cinestésico:** Crie um clima acolhedor antes de corrigir, valorize o lado humano e dê espaço para ele experimentar na prática.
+            * **Se for Digital:** Vá direto ao ponto apresentando fatos, planilhas e lógicas claras. Evite excesso de apelo emocional em decisões críticas.
             """)
             
             st.markdown("---")
-            with st.expander("🔍 Ver Respostas Brutas do Teste Comportamental (Texto)"):
+            with st.expander("🔍 Ver Respostas Brutas do Teste Comportamental (Texto)", expanded=False):
                 perguntas_texto = list(gabarito_comportamental.keys())
                 for p in perguntas_texto:
                     if p in linha_cand:
