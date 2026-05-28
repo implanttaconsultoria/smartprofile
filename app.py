@@ -21,7 +21,7 @@ st.set_page_config(
 )
 
 # =====================================================================
-# 🎨 ESTILOS VISUAIS CUSTOMIZADOS (CSS) E MOTOR DE PDF AVANÇADO
+# 🎨 ESTILOS VISUAIS CUSTOMIZADOS E MOTOR DE COMPACTAÇÃO DE PDF
 # =====================================================================
 st.markdown("""
     <style>
@@ -47,17 +47,17 @@ st.markdown("""
     @media print {
         @page {
             size: A4 portrait;
-            margin: 1.5cm;
+            margin: 1cm; /* Margem reduzida para dar mais espaço ao conteúdo */
         }
         
-        /* Oculta interface do sistema */
-        section[data-testid="stSidebar"], header[data-testid="stHeader"], 
-        .stRadio, div.stButton, div[data-testid="stSelectbox"] { 
+        /* 🚨 MAGIA AQUI: Oculta o botão de imprimir, a caixa de seleção e os menus! */
+        section[data-testid="stSidebar"], 
+        header[data-testid="stHeader"], 
+        div[data-testid="stSelectbox"],
+        iframe, 
+        .no-print { 
             display: none !important; 
-        }
-        /* Oculta o botão de imprimir */
-        iframe[title="streamlit.components.v1.components.html"] { 
-            display: none !important; 
+            height: 0 !important;
         }
 
         /* Remove margens extras para aproveitar a página inteira */
@@ -68,27 +68,35 @@ st.markdown("""
             width: 100% !important;
         }
 
+        /* Compacta as Caixas de Informação do Candidato */
+        div[data-testid="stAlert"] {
+            padding: 10px !important;
+            margin-bottom: 5px !important;
+        }
+        
+        /* Ajusta o tamanho dos títulos no papel para não roubar espaço */
+        h1 { font-size: 26px !important; margin-top: 0 !important; padding-top: 0 !important; margin-bottom: 5px !important; }
+        h3 { font-size: 18px !important; margin-top: 5px !important; margin-bottom: 5px !important;}
+        h4 { font-size: 16px !important; margin-top: 5px !important; margin-bottom: 5px !important;}
+        p { margin-bottom: 5px !important; }
+
         /* IMPEDE CORTES: Garante que os gráficos fiquem 100% visíveis */
         .stPlotlyChart, .stPlotlyChart > div, .js-plotly-plot, .plot-container {
             overflow: visible !important;
             page-break-inside: avoid !important;
         }
 
-        /* 🚨 BLINDAGEM DE QUEBRA DE PÁGINA */
+        /* BLINDAGEM DE QUEBRA DE PÁGINA */
         [data-testid="stHorizontalBlock"] { 
             page-break-inside: avoid !important; 
-            align-items: center !important;
+            align-items: flex-start !important;
         }
-        [data-testid="stVerticalBlock"] {
+        [data-testid="stVerticalBlock"], [data-testid="stExpander"] {
             page-break-inside: avoid !important;
+            margin-bottom: 5px !important;
         }
         h1, h2, h3, h4, h5, h6 {
             page-break-after: avoid !important;
-            margin-bottom: 5px !important;
-            margin-top: 15px !important;
-        }
-        [data-testid="stExpander"] { 
-            page-break-inside: avoid !important; 
         }
         
         /* Força a impressão das cores corporativas */
@@ -163,7 +171,7 @@ def carregar_dados_planilha():
 df_dados = carregar_dados_planilha()
 
 # =====================================================================
-# 🧮 1. PROCESSAMENTO PNL
+# 🧮 1. PROCESSAMENTO PNL E ANIMAIS (FUNÇÕES)
 # =====================================================================
 def calcular_sistema_representacional(linha):
     colunas_visual = ["Eu tomo decisões importantes baseados em: [o que me parece melhor]", "Durante uma discussão eu sou mais influenciado por: [se eu posso ou não ver o argumento da outra pessoa]", "Eu comunico mais facilmente o que se passa comigo: [do modo como me visto e aparento]", "É muito fácil para mim: [escolher as combinações de cores mais ricas e atraentes]", "Eu me percebo assim: [eu respondo fortemente às cores e à aparência de uma sala]"]
@@ -187,9 +195,6 @@ def calcular_sistema_representacional(linha):
         return {"Visual": round((v_score / total) * 100, 1), "Auditivo": round((a_score / total) * 100, 1), "Cinestésico": round((c_score / total) * 100, 1), "Digital (Lógico)": round((d_score / total) * 100, 1)}
     return {"Visual": 25.0, "Auditivo": 25.0, "Cinestésico": 25.0, "Digital (Lógico)": 25.0}
 
-# =====================================================================
-# 🦁 2. PROCESSAMENTO TESTE COMPORTAMENTAL (ANIMAIS)
-# =====================================================================
 gabarito_comportamental = {
     "Eu sou": {"Idealista, criativo e visionário": "Águia", "Divertido, espiritual e benéfico": "Gato", "Confiável, meticuloso e previsível": "Lobo", "Focado, determinado e persistente": "Tubarão"},
     "Eu gosto de ...": {"Ser piloto, o condutor": "Tubarão", "Conversar com os passageiros": "Gato", "Planejar a viajem": "Lobo", "Explorar novas rotas": "Águia"},
@@ -247,50 +252,39 @@ else:
 # =====================================================================
 if tela == "👤 Perfil do Candidato":
     
-    # CABEÇALHO 
-    with st.container():
-        col_titulo, col_logo = st.columns([3.5, 1.5])
-        with col_titulo:
-            st.title("👤 Relatório de Engenharia de Perfil")
-            st.caption("Mapeamento automatizado extraído em tempo real pela Implantta Consultoria.")
-        with col_logo:
-            try:
-                st.image("Versão Melhorada da Marca.png", use_container_width=True)
-            except:
-                pass
-                
-        st.markdown("---")
-        
-        col_sel, col_btn = st.columns([3, 1.5])
-        with col_sel:
-            candidato_sel = st.selectbox("Selecione o Candidato para analisar os resultados:", lista_candidatos)
-        
-        with col_btn:
-            st.write("")
-            script_pdf = f"""
-            <script>
-                function imprimirRelatorio() {{
-                    try {{
-                        var doc = window.parent.document;
-                        var tituloAntigo = doc.title;
-                        doc.title = "MapeiaAI - Implantta Consultoria - {candidato_sel}";
-                        window.parent.print();
-                        setTimeout(function() {{ doc.title = tituloAntigo; }}, 2000);
-                    }} catch(e) {{
-                        window.print();
-                    }}
+    # 🌟 1. CONTROLES NO TOPO ABSOLUTO (Ficam ocultos ao gerar o PDF)
+    col_sel, col_btn = st.columns([3, 1.5])
+    with col_sel:
+        candidato_sel = st.selectbox("Selecione o Candidato para analisar os resultados:", lista_candidatos)
+    
+    with col_btn:
+        st.write("")
+        script_pdf = f"""
+        <script>
+            function imprimirRelatorio() {{
+                try {{
+                    var doc = window.parent.document;
+                    var tituloAntigo = doc.title;
+                    doc.title = "MapeiaAI - Implantta Consultoria - {candidato_sel}";
+                    window.parent.print();
+                    setTimeout(function() {{ doc.title = tituloAntigo; }}, 2000);
+                }} catch(e) {{
+                    window.print();
                 }}
-            </script>
-            <button onclick="imprimirRelatorio()" style="
-                background-color: #DDA15E; color: white; border: none; padding: 10px 15px; 
-                border-radius: 5px; cursor: pointer; font-family: sans-serif; font-weight: bold;
-                font-size: 14px; width: 100%; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.3s;
-                margin-top: 10px;
-            " onmouseover="this.style.backgroundColor='#c98d4b'" onmouseout="this.style.backgroundColor='#DDA15E'">
-                📥 Salvar PDF do Candidato
-            </button>
-            """
-            components.html(script_pdf, height=75)
+            }}
+        </script>
+        <button onclick="imprimirRelatorio()" style="
+            background-color: #DDA15E; color: white; border: none; padding: 10px 15px; 
+            border-radius: 5px; cursor: pointer; font-family: sans-serif; font-weight: bold;
+            font-size: 14px; width: 100%; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.3s;
+            margin-top: 10px;
+        " onmouseover="this.style.backgroundColor='#c98d4b'" onmouseout="this.style.backgroundColor='#DDA15E'">
+            📥 Salvar PDF do Candidato
+        </button>
+        """
+        components.html(script_pdf, height=75)
+        
+    st.markdown('<hr class="no-print" style="margin: 0.5em 0;">', unsafe_allow_html=True)
     
     if df_dados is not None and "Nome" in df_dados.columns and candidato_sel in df_dados["Nome"].values:
         linha_cand = df_dados[df_dados["Nome"] == candidato_sel].iloc[0]
@@ -303,14 +297,27 @@ if tela == "👤 Perfil do Candidato":
         valores_canais = calcular_sistema_representacional(linha_cand)
         valores_animais = calcular_perfil_animais(linha_cand)
         
+        # 🌟 2. CABEÇALHO OFICIAL DO RELATÓRIO (É aqui que a impressão começa a ler)
         with st.container():
+            col_titulo, col_logo = st.columns([3.5, 1.5])
+            with col_titulo:
+                st.title("👤 Relatório de Engenharia de Perfil")
+                st.caption("Mapeamento automatizado extraído em tempo real pela Implantta Consultoria.")
+            with col_logo:
+                try:
+                    st.image("Versão Melhorada da Marca.png", use_container_width=True)
+                except:
+                    pass
+            
+            # CAIXAS DE INFORMAÇÃO LOGO ABAIXO DO TÍTULO (Ganhando espaço vertical!)
             col_a, col_b, col_c, col_d = st.columns(4)
             col_a.info(f"**Candidato:**\n\n**{candidato_sel}**")
             col_b.info(f"**Vaga / Função:**\n\n{vaga_alvo}")
             col_c.info(f"**Empresa:**\n\n{empresa_alvo}")
-            col_d.info(f"**Data:**\n\n{data_teste}")
+            col_d.info(f"**Data da Aplicação:**\n\n{data_teste}")
                 
-            st.markdown("<br>", unsafe_allow_html=True)
+        # Br extra apenas na tela para respirar, desaparece na impressão para economizar espaço
+        st.markdown('<br class="no-print">', unsafe_allow_html=True)
         
         # 🟢 BLOCO 1: GRÁFICO DOS ANIMAIS (LAYOUT VERTICAL PARA PDF)
         with st.container():
@@ -334,20 +341,19 @@ if tela == "👤 Perfil do Candidato":
             )
             fig_animais.update_traces(textposition='inside', textinfo='percent+label')
             
-            # Gráfico centralizado e amplo para ganhar destaque!
+            # Gráfico otimizado
             fig_animais.update_layout(
-                height=300, 
+                height=240, 
                 showlegend=False, 
-                margin=dict(t=10, b=10, l=0, r=0)
+                margin=dict(t=0, b=0, l=0, r=0)
             )
             st.plotly_chart(fig_animais, use_container_width=True)
             
-            # Parecer Analítico posicionado logo abaixo do Gráfico
             st.markdown("#### 📊 Parecer Analítico")
             st.markdown(f"**Distribuição de Perfis:** Predominância Primária de **{top1_nome}** ({top1_valor}%) com suporte Secundário de **{top2_nome}** ({top2_valor}%).")
             st.info("💡 Logo abaixo, detalhamos os Pontos Fortes e os Pontos de Atenção baseados nesta distribuição comportamental.")
 
-        # 🟢 BLOCO 2: CAIXAS DE PONTOS FORTES E FRACOS (EMPILHADAS VERTICALMENTE)
+        # 🟢 BLOCO 2: CAIXAS DE PONTOS FORTES E FRACOS
         with st.container():
             detalhes_perfis = {
                 "Tubarão": {
@@ -385,20 +391,20 @@ if tela == "👤 Perfil do Candidato":
                 
             convergente = (top1_nome in perfis_ideais)
 
-            # Caixas empilhadas verticalmente para o PDF ler de forma limpa!
-            with st.expander("⭐ Pontos Fortes do Candidato", expanded=True):
-                st.write(f"• **Fator {top1_nome}:** {detalhes_perfis[top1_nome]['fortes']}")
-                if top2_valor > 15:
-                    st.write(f"• **Fator {top2_nome}:** {detalhes_perfis[top2_nome]['fortes']}")
-                    
-            with st.expander("⚠️ Pontos de Atenção (Fraquezas)", expanded=True):
-                st.write(f"• **Riscos de {top1_nome}:** {detalhes_perfis[top1_nome]['fracos']}")
-                if top2_valor > 15:
-                    st.write(f"• **Riscos de {top2_nome}:** {detalhes_perfis[top2_nome]['fracos']}")
+            col_fortes, col_fracos = st.columns(2)
+            with col_fortes:
+                with st.expander("⭐ Pontos Fortes do Candidato", expanded=True):
+                    st.write(f"• **Fator {top1_nome}:** {detalhes_perfis[top1_nome]['fortes']}")
+                    if top2_valor > 15:
+                        st.write(f"• **Fator {top2_nome}:** {detalhes_perfis[top2_nome]['fortes']}")
+                        
+            with col_fracos:
+                with st.expander("⚠️ Pontos de Atenção (Fraquezas)", expanded=True):
+                    st.write(f"• **Riscos de {top1_nome}:** {detalhes_perfis[top1_nome]['fracos']}")
+                    if top2_valor > 15:
+                        st.write(f"• **Riscos de {top2_nome}:** {detalhes_perfis[top2_nome]['fracos']}")
 
-            st.markdown("<br>", unsafe_allow_html=True)
-
-        # 🎯 BLOCO 3: CONCLUSÃO (MANTIDO EM COLUNAS LARGAS)
+        # 🎯 BLOCO 3: CONCLUSÃO (BLINDADO)
         with st.container():
             st.markdown("#### 🎯 Alinhamento com a Função & Conclusão")
             
@@ -432,7 +438,7 @@ if tela == "👤 Perfil do Candidato":
                         
             st.markdown("---")
         
-        # 🔵 BLOCO 4: PNL (LAYOUT VERTICAL)
+        # 🔵 BLOCO 4: PNL E MANUAL
         with st.container():
             st.subheader("📊 Sistema Representacional (PNL)")
             
@@ -451,16 +457,14 @@ if tela == "👤 Perfil do Candidato":
                 color_discrete_map=cores_canais
             )
             
-            # Gráfico Largo em destaque
             fig.update_layout(
-                height=300, 
+                height=260, 
                 showlegend=False, 
                 margin=dict(t=10, b=10, l=0, r=0)
             )
             st.plotly_chart(fig, use_container_width=True)
             
-            # Manual de Relacionamento posicionado logo abaixo do Gráfico PNL
-            st.subheader("🧠 Manual de Relacionamento")
+            st.subheader("🧠 Manual de Relacionamento (Liderança)")
             st.info("💡 **Dica para a Gestão:** Use o canal predominante para guiar a comunicação diária com o colaborador.")
             
             st.markdown(f"""
