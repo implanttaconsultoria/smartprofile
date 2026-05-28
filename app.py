@@ -25,7 +25,7 @@ st.set_page_config(
 # =====================================================================
 st.markdown("""
     <style>
-    /* Ajuste da Caixa de Seleção: Fundo Azul e Fonte Branca */
+    /* 1. Ajuste da Caixa de Seleção: Fundo Azul e Fonte Branca */
     div[data-baseweb="select"] > div {
         background-color: #2B5C8F !important;
         color: white !important;
@@ -35,7 +35,16 @@ st.markdown("""
         color: white !important;
     }
     
-    /* Configurações Estritas para a Geração do PDF Perfeito */
+    /* 2. Menu Lateral Totalmente Branco para Contraste */
+    section[data-testid="stSidebar"] * {
+        color: white !important;
+    }
+    /* Deixar o botão selecionado do menu mais visível */
+    div[role="radiogroup"] label {
+        color: white !important;
+    }
+    
+    /* 3. Configurações Estritas para a Geração do PDF Perfeito */
     @media print {
         /* Oculta interface do sistema */
         section[data-testid="stSidebar"] { display: none !important; }
@@ -45,17 +54,16 @@ st.markdown("""
         iframe { display: none !important; } 
         div[data-testid="stSelectbox"] { display: none !important; }
 
-        /* Tira margens excessivas do topo e laterais no PDF */
+        /* Remove margens do topo para aproveitar a página 1 toda */
         .block-container {
-            padding-top: 1rem !important;
-            padding-bottom: 1rem !important;
+            padding-top: 0rem !important;
+            padding-bottom: 0rem !important;
+            margin-top: 0rem !important;
         }
 
-        /* IMPEDE QUE OS GRÁFICOS E CAIXAS SEJAM CORTADOS AO MEIO NA PÁGINA */
-        .stPlotlyChart { page-break-inside: avoid !important; margin-bottom: 15px; }
-        .stMarkdown { page-break-inside: avoid !important; }
-        [data-testid="stExpander"] { page-break-inside: avoid !important; margin-bottom: 10px; }
-        [data-testid="stHorizontalBlock"] { page-break-inside: avoid !important; }
+        /* Mantém apenas os gráficos protegidos de corte, mas permite que os textos fluam */
+        .stPlotlyChart { page-break-inside: avoid !important; margin-bottom: 5px; }
+        [data-testid="stExpander"] { page-break-inside: avoid !important; margin-bottom: 5px; }
         
         /* Força a impressão das cores corporativas */
         * {
@@ -216,7 +224,7 @@ else:
 # =====================================================================
 if tela == "👤 Perfil do Candidato":
     
-    # 🌟 NOVO CABEÇALHO (Logo maior e na Direita)
+    # 🌟 CABEÇALHO (Logo maior e na Direita)
     col_titulo, col_logo = st.columns([3.5, 1.5])
     
     with col_titulo:
@@ -225,33 +233,28 @@ if tela == "👤 Perfil do Candidato":
         
     with col_logo:
         try:
-            # A logo vai aparecer à direita e com tamanho mais encorpado pelas proporções da coluna
             st.image("Versão Melhorada da Marca.png", use_container_width=True)
         except:
             pass
             
     st.markdown("---")
     
-    # Seleção de Candidato
-    col_sel, col_btn = st.columns([3, 1])
+    # Seleção de Candidato + Espaço ampliado para o Botão
+    col_sel, col_btn = st.columns([3, 1.5])
     with col_sel:
         candidato_sel = st.selectbox("Selecione o Candidato para analisar os resultados:", lista_candidatos)
     
-    # 🌟 BOTÃO INTELIGENTE DE DOWNLOAD (Garante o Título Dinâmico)
+    # 🌟 BOTÃO INTELIGENTE DE DOWNLOAD (Altura ajustada para não cortar)
     with col_btn:
         st.write("")
-        st.write("")
-        
         script_pdf = f"""
         <script>
             function imprimirRelatorio() {{
                 try {{
                     var doc = window.parent.document;
                     var tituloAntigo = doc.title;
-                    // Altera o título do navegador temporariamente para salvar o PDF com o nome correto
                     doc.title = "MapeiaAI - Implantta Consultoria - {candidato_sel}";
                     window.parent.print();
-                    // Retorna ao título original após 2 segundos
                     setTimeout(function() {{ doc.title = tituloAntigo; }}, 2000);
                 }} catch(e) {{
                     window.print();
@@ -262,11 +265,12 @@ if tela == "👤 Perfil do Candidato":
             background-color: #DDA15E; color: white; border: none; padding: 10px 15px; 
             border-radius: 5px; cursor: pointer; font-family: sans-serif; font-weight: bold;
             font-size: 14px; width: 100%; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.3s;
+            margin-top: 10px;
         " onmouseover="this.style.backgroundColor='#c98d4b'" onmouseout="this.style.backgroundColor='#DDA15E'">
             📥 Salvar PDF do Candidato
         </button>
         """
-        components.html(script_pdf, height=45)
+        components.html(script_pdf, height=75) # Altura aumentada para garantir que não corta!
     
     if df_dados is not None and "Nome" in df_dados.columns and candidato_sel in df_dados["Nome"].values:
         linha_cand = df_dados[df_dados["Nome"] == candidato_sel].iloc[0]
@@ -307,11 +311,11 @@ if tela == "👤 Perfil do Candidato":
             )
             fig_animais.update_traces(textposition='inside', textinfo='percent+label')
             
-            # ✨ GRÁFICO MAIS ACHATADO PARA CABER NO PDF (height=280)
+            # ✨ GRÁFICO ACHATADO (height=250 para otimizar espaço no PDF)
             fig_animais.update_layout(
-                height=280, 
+                height=250, 
                 showlegend=False, 
-                margin=dict(t=10, b=10, l=10, r=10)
+                margin=dict(t=5, b=5, l=5, r=5)
             )
             st.plotly_chart(fig_animais, use_container_width=True)
             
@@ -427,11 +431,11 @@ if tela == "👤 Perfil do Candidato":
                 color_discrete_map=cores_canais
             )
             
-            # ✨ GRÁFICO MAIS ACHATADO PARA CABER NO PDF (height=250)
+            # ✨ GRÁFICO ACHATADO (height=220)
             fig.update_layout(
-                height=250, 
+                height=220, 
                 showlegend=False, 
-                margin=dict(t=10, b=10, l=10, r=10)
+                margin=dict(t=5, b=5, l=5, r=5)
             )
             st.plotly_chart(fig, use_container_width=True)
             
