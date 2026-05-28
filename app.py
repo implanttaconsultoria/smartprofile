@@ -13,7 +13,6 @@ if os.path.exists("secrets.toml"):
     shutil.copy("secrets.toml", ".streamlit/secrets.toml")
 # =====================================================================
 
-# 1. Configuração da página
 st.set_page_config(
     page_title="MapeiaAI - Implantta Consultoria", 
     page_icon="🧠",
@@ -30,18 +29,19 @@ st.sidebar.markdown("---")
 st.sidebar.title("Painel de Controle")
 tela = st.sidebar.radio("Navegar para:", ["📊 Dashboard Geral", "👤 Perfil do Candidato"])
 
-# Definição das cores da marca
-cores_canais = {
-    "Visual": "#00B5B5", 
-    "Auditivo": "#33CCCC", 
-    "Cinestésico": "#004B8D", 
-    "Digital (Lógico)": "#FF7A00"
-}
+# 🔥 NOVA PALETA DE CORES: SÓBRIA, PROFISSIONAL E COM ALTO CONTRASTE
 cores_animais = {
-    "Águia": "#FFD700", 
-    "Gato": "#FF69B4", 
-    "Lobo": "#696969", 
-    "Tubarão": "#DC143C"
+    "Tubarão": "#2B5C8F",   # Azul Oceano Sóbrio (Foco, Execução)
+    "Lobo": "#5A6B7C",      # Cinza Corporativo (Ordem, Processos)
+    "Águia": "#DDA15E",     # Ouro Velho / Mostarda Sóbrio (Criatividade, Visão)
+    "Gato": "#8EBCB5"       # Verde Sálvia / Menta Sóbrio (Empatia, Pessoas)
+}
+
+cores_canais = {
+    "Visual": "#1F4E5B", 
+    "Auditivo": "#2D728F", 
+    "Cinestésico": "#3B8EA5", 
+    "Digital (Lógico)": "#4D9A8E"
 }
 
 # =====================================================================
@@ -54,7 +54,6 @@ def carregar_dados_planilha():
         url_planilha = "https://docs.google.com/spreadsheets/d/1cz6O2iSync1c2E-lNGmEsgwMBrOgB2DHWz02A-y2g1Y/edit"
         df = conn.read(spreadsheet=url_planilha)
         
-        # ✨ CAÇADOR DE CABEÇALHOS
         if "Nome" not in df.columns:
             for i, row in df.iterrows():
                 valores_linha = [str(val).lower().strip() for val in row.values]
@@ -63,10 +62,8 @@ def carregar_dados_planilha():
                     df = df.iloc[i+1:].reset_index(drop=True) 
                     break
                     
-        # Limpa o dataframe de colunas nulas
         df = df.loc[:, df.columns.notna()]
         
-        # ✨ BLINDAGEM DE NOME
         coluna_nome = None
         for col in df.columns:
             if "nome" in str(col).lower():
@@ -174,7 +171,7 @@ gabarito_comportamental = {
     },
     "Eu penso que...": {
         "Unidos venceremos, divididos perderemos": "Gato",
-        "O ataque é melhor que a defesa": "Tubarão",
+        "O ataque é melhor que a defense": "Tubarão",
         "É bom ser manso, mas andar com um porrete": "Águia",
         "Um homem prevenido vale por dois": "Lobo"
     },
@@ -299,7 +296,7 @@ def calcular_perfil_animais(linha):
     total_respondido = 0
     
     for pergunta, alternativas in gabarito_comportamental.items():
-        if pergunta in linha:
+        if pergunta in line:
             resposta_cand = str(linha.get(pergunta, "")).strip().lower()
             for resp_chave, animal in alternativas.items():
                 if resp_chave.strip().lower() in resposta_cand:
@@ -374,25 +371,106 @@ if tela == "👤 Perfil do Candidato":
                 hole=0.4
             )
             fig_animais.update_traces(textposition='inside', textinfo='percent+label')
-            fig_animais.update_layout(showlegend=False)
+            fig_animais.update_layout(showlegend=False, margin=dict(t=10, b=10, l=10, r=10))
             st.plotly_chart(fig_animais, use_container_width=True)
             
         with col_animais2:
-            st.success("📝 **Status:** Teste Comportamental Tabulado e Calculado.")
+            st.markdown("#### 📊 Parecer Comportamental Avançado")
             
             perfis_ordenados = sorted(valores_animais.items(), key=lambda x: x[1], reverse=True)
             top1_nome, top1_valor = perfis_ordenados[0]
             top2_nome, top2_valor = perfis_ordenados[1]
             
-            st.markdown(f"""
-            #### 📊 Parecer Comportamental Dinâmico
-            O candidato apresenta uma forte tendência de comportamento direcionada aos perfis **{top1_nome}** ({top1_valor}%) e **{top2_nome}** ({top2_valor}%).
+            # Dicionário dinâmico de características por perfil
+            detalhes_perfis = {
+                "Tubarão": {
+                    "fortes": "Foco em resultados, iniciativa, senso de urgência, coragem para decidir e alta resiliência sob pressão.",
+                    "fracos": "Dificuldade em delegar, tendência ao autoritarismo, baixa paciência com processos lentos e inclinação a atropelar o planejamento.",
+                    "estilo": "comercial, liderança, posições operacionais de ritmo acelerado ou áreas que demandem metas agressivas."
+                },
+                "Lobo": {
+                    "fortes": "Organização cirúrgica, atenção extrema a detalhes, disciplina, lealdade a regras e alta previsibilidade na entrega.",
+                    "fracos": "Resistência acentuada a mudanças repentinas, perfeccionismo que pode gerar lentidão e dificuldade de agir no improviso.",
+                    "estilo": "controladoria, finanças, contabilidade, processos de qualidade, auditoria ou TI estruturada."
+                },
+                "Águia": {
+                    "fortes": "Pensamento disruptivo, criatividade, facilidade de adaptação, olhar de longo prazo e entusiasmo para propor inovações.",
+                    "fracos": "Falta de linearidade na execução, propensão a perder o foco antes de concluir tarefas repetitivas e indisciplina com prazos rígidos.",
+                    "estilo": "marketing, desenvolvimento de produtos, estratégias corporativas ou cenários de transformação e inovação."
+                },
+                "Gato": {
+                    "fortes": "Excelente comunicação interpessoal, mediação de conflitos, facilidade para trabalhar em equipe, empatia e construção de harmonia.",
+                    "fracos": "Dificuldade para dar feedbacks duros, tendência a evitar confrontos necessários e vulnerabilidade a ambientes altamente agressivos.",
+                    "estilo": "recursos humanos, atendimento ao cliente, sucesso do cliente (CS), recepção ou áreas de suporte focado em pessoas."
+                }
+            }
             
-            **Análise de Combinação:**
-            * O perfil primário (**{top1_nome}**) dita a forma como o candidato toma a frente das situações sob pressão e os seus objetivos centrais.
-            * O perfil secundário (**{top2_nome}**) age como um balanceador, demonstrando como ele colabora ou analisa o cenário ao redor.
+            # 🔍 MOTOR DE CÁLCULO DE MATCH COM A VAGA
+            vaga_lower = vaga_alvo.lower()
+            tipo_vaga = "Geral"
+            
+            # Categorização simplificada da vaga com base em palavras-chave comuns
+            if any(k in vaga_lower for k in ["contab", "financ", "fiscal", "lobo", "adm", "process", "ti", "suport", "auditor", "qualidad"]):
+                tipo_vaga = "Processos/Contábil/Analítico"
+                perfis_ideais = ["Lobo", "Tubarão"]
+            elif any(k in vaga_lower for k in ["vend", "comercial", "geren", "diretor", "lider", "meta", "tubarao", "expansao"]):
+                tipo_vaga = "Comercial/Liderança/Execução"
+                perfis_ideais = ["Tubarão", "Águia"]
+            elif any(k in vaga_lower for k in ["rh", "human", "atend", "gato", "client", "relacionamento", "cs", "sucesso"]):
+                tipo_vaga = "Pessoas/Atendimento/Suporte"
+                perfis_ideais = ["Gato", "Águia"]
+            else:
+                tipo_vaga = "Estratégico/Geral"
+                perfis_ideais = [top1_nome, top2_nome] # Se a vaga for genérica, assume o topo do candidato
+                
+            # Verifica a convergência
+            convergente = (top1_nome in perfis_ideais)
+            
+            # Montagem dinâmica do parecer estratégico
+            st.markdown(f"**Distribuição de Perfis:** Predominância Primária de **{top1_nome}** ({top1_valor}%) com suporte Secundário de **{top2_nome}** ({top2_valor}%).")
+            
+            with st.expander("⭐ Pontos Fortes do Candidato", expanded=True):
+                st.write(f"• **Fator {top1_nome}:** {detalhes_perfis[top1_nome]['fortes']}")
+                if top2_valor > 15:
+                    st.write(f"• **Fator {top2_nome}:** {detalhes_perfis[top2_nome]['fortes']}")
+                    
+            with st.expander("⚠️ Pontos de Atenção (Fraquezas)", expanded=True):
+                st.write(f"• **Riscos de {top1_nome}:** {detalhes_perfis[top1_nome]['fracos']}")
+                if top2_valor > 15:
+                    st.write(f"• **Riscos de {top2_nome}:** {detalhes_perfis[top2_nome]['fracos']}")
+
+        # 🎯 BLOCO DA CONCLUSÃO E RECOMENDAÇÃO FINAL (CRUZAMENTO COMPLETO)
+        st.markdown("#### 🎯 Alinhamento com a Função & Conclusão do Consultor")
+        
+        predominante_pnl = max(valores_canais, key=valores_canais.get)
+        pnl_detalhes = {
+            "Visual": "processa informações em alta velocidade, ideal para rotinas dinâmicas e de alta carga visual.",
+            "Auditivo": "excelente para posições que exigem escuta ativa, diálogo e forte negociação verbal.",
+            "Cinestésico": "melhor aproveitado em funções práticas, que envolvem contato, intuição e estabilidade.",
+            "Digital (Lógico)": "altamente analítico, ideal para cenários que exigem validação de dados, fatos e lógica fria."
+        }
+        
+        col_concl1, col_concl2 = st.columns([1.5, 1])
+        with col_concl1:
+            st.markdown(f"""
+            **Análise de Engenharia de Cargo:** A vaga indicada (**{vaga_alvo}**) possui características de ambiente do tipo *{tipo_vaga}*. Para este cenário, os perfis comportamentais mais recomendados na Engenharia de Perfil são **{', '.join(perfis_ideais)}**.
+            
+            O candidato combina essa estrutura comportamental com um canal representacional predominantemente **{predominante_pnl}**, o que significa que ele {pnl_detalhes[predominante_pnl]}
             """)
             
+        with col_concl2:
+            if convergente:
+                st.metric(label="RECOMENDAÇÃO FINAL", value="✅ CONTRATAR")
+                st.caption("🏆 **Justificativa:** Alta aderência comportamental com o escopo da vaga e o estilo de raciocínio técnico exigido pela função.")
+            else:
+                # Se o perfil primário não é o ideal, avalia o secundário
+                if top2_nome in perfis_ideais:
+                    st.metric(label="RECOMENDAÇÃO FINAL", value="🟡 CONTRATAR COM RESERVAS")
+                    st.caption("👀 **Justificativa:** O perfil principal difere do esperado, mas o perfil secundário equilibra as competências técnicas. Recomendado focar a entrevista técnica nos pontos de atenção.")
+                else:
+                    st.metric(label="RECOMENDAÇÃO FINAL", value="❌ AVALIAR OUTROS PERFIS")
+                    st.caption("🚨 **Justificativa:** Desalinhamento natural entre a energia comportamental predominante do candidato e as rotinas diárias da função.")
+                    
         st.markdown("---")
         
         # 🔵 SEÇÃO 2: PNL
@@ -415,24 +493,19 @@ if tela == "👤 Perfil do Candidato":
                 template="streamlit",
                 color_discrete_map=cores_canais
             )
-            fig.update_layout(showlegend=False)
+            fig.update_layout(showlegend=False, margin=dict(t=10, b=10, l=10, r=10))
             st.plotly_chart(fig, use_container_width=True)
             
         with col_pnl2:
-            st.subheader("🧠 Parecer de Engenharia de Perfil")
-            st.success("📝 **Status:** Dados integrados e tabulados via API com sucesso.")
-            
-            predominante_pnl = max(
-                valores_canais, 
-                key=valores_canais.get
-            )
+            st.subheader("🧠 Canais de Captação & Abordagem")
+            st.info("💡 **Dica de Entrevista:** Use a predominância de PNL para moldar as suas perguntas.")
             
             st.markdown(f"""
-            O candidato apresenta um canal de captação predominantemente **{predominante_pnl}** ({valores_canais[predominante_pnl]}%).
-            
-            **Dicas de Abordagem para o Consultor:**
-            * O gráfico ao lado representa a distribuição exata de energia de captação de estímulos do candidato.
-            * Use essa informação para estruturar dinâmicas de entrevista alinhadas com a velocidade de processamento dele.
+            Como o candidato possui o canal **{predominante_pnl}** mais elevado, a melhor tática para o consultor da Implantta durante a fase presencial é:
+            * **Se for Visual:** Use termos como *"Veja bem"*, *"Imagine esse cenário"*. Mantenha contato visual fixo.
+            * **Se for Auditivo:** Module bem o tom de voz, evite ruídos no ambiente. Use *"Ouça o raciocínio"*.
+            * **Se for Cinestésico:** Crie um clima confortável, dê espaço para ele falar sobre sensações e experiências práticas.
+            * **Se for Digital:** Apresente números, fatos incontestáveis, lógica estruturada e não tente apelar apenas para o lado emocional.
             """)
             
             st.markdown("---")
