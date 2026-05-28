@@ -45,31 +45,51 @@ st.markdown("""
     
     /* Configurações Estritas para a Geração do PDF Perfeito */
     @media print {
+        @page {
+            size: A4 portrait;
+            margin: 1.5cm;
+        }
+        
         /* Oculta interface do sistema */
-        section[data-testid="stSidebar"] { display: none !important; }
-        header[data-testid="stHeader"] { display: none !important; }
-        .stRadio { display: none !important; }
-        div.stButton { display: none !important; }
-        iframe { display: none !important; } 
-        div[data-testid="stSelectbox"] { display: none !important; }
+        section[data-testid="stSidebar"], header[data-testid="stHeader"], 
+        .stRadio, div.stButton, div[data-testid="stSelectbox"] { 
+            display: none !important; 
+        }
+        /* Oculta o botão de imprimir */
+        iframe[title="streamlit.components.v1.components.html"] { 
+            display: none !important; 
+        }
 
         /* Remove margens extras para aproveitar a página inteira */
         .block-container {
-            padding-top: 0rem !important;
-            padding-bottom: 0rem !important;
-            margin-top: 0rem !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            max-width: 100% !important;
+            width: 100% !important;
         }
 
-        /* 🚨 NOVO AJUSTE: Impede títulos órfãos no final da folha */
+        /* IMPEDE CORTES: Garante que os gráficos fiquem 100% visíveis */
+        .stPlotlyChart, .stPlotlyChart > div, .js-plotly-plot, .plot-container {
+            overflow: visible !important;
+            page-break-inside: avoid !important;
+        }
+
+        /* 🚨 BLINDAGEM DE QUEBRA DE PÁGINA */
+        [data-testid="stHorizontalBlock"] { 
+            page-break-inside: avoid !important; 
+            align-items: center !important;
+        }
+        [data-testid="stVerticalBlock"] {
+            page-break-inside: avoid !important;
+        }
         h1, h2, h3, h4, h5, h6 {
             page-break-after: avoid !important;
             margin-bottom: 5px !important;
+            margin-top: 15px !important;
         }
-
-        /* Compacta os espaços e protege gráficos */
-        div[data-testid="stVerticalBlock"] { gap: 0rem !important; }
-        .stPlotlyChart { page-break-inside: avoid !important; margin-bottom: 0px !important; }
-        [data-testid="stExpander"] { page-break-inside: avoid !important; margin-bottom: 0px !important; }
+        [data-testid="stExpander"] { 
+            page-break-inside: avoid !important; 
+        }
         
         /* Força a impressão das cores corporativas */
         * {
@@ -227,48 +247,50 @@ else:
 # =====================================================================
 if tela == "👤 Perfil do Candidato":
     
-    col_titulo, col_logo = st.columns([3.5, 1.5])
-    with col_titulo:
-        st.title("👤 Relatório de Engenharia de Perfil")
-        st.caption("Mapeamento automatizado extraído em tempo real pela Implantta Consultoria.")
-    with col_logo:
-        try:
-            st.image("Versão Melhorada da Marca.png", use_container_width=True)
-        except:
-            pass
-            
-    st.markdown("---")
-    
-    col_sel, col_btn = st.columns([3, 1.5])
-    with col_sel:
-        candidato_sel = st.selectbox("Selecione o Candidato para analisar os resultados:", lista_candidatos)
-    
-    with col_btn:
-        st.write("")
-        script_pdf = f"""
-        <script>
-            function imprimirRelatorio() {{
-                try {{
-                    var doc = window.parent.document;
-                    var tituloAntigo = doc.title;
-                    doc.title = "MapeiaAI - Implantta Consultoria - {candidato_sel}";
-                    window.parent.print();
-                    setTimeout(function() {{ doc.title = tituloAntigo; }}, 2000);
-                }} catch(e) {{
-                    window.print();
+    # CABEÇALHO 
+    with st.container():
+        col_titulo, col_logo = st.columns([3.5, 1.5])
+        with col_titulo:
+            st.title("👤 Relatório de Engenharia de Perfil")
+            st.caption("Mapeamento automatizado extraído em tempo real pela Implantta Consultoria.")
+        with col_logo:
+            try:
+                st.image("Versão Melhorada da Marca.png", use_container_width=True)
+            except:
+                pass
+                
+        st.markdown("---")
+        
+        col_sel, col_btn = st.columns([3, 1.5])
+        with col_sel:
+            candidato_sel = st.selectbox("Selecione o Candidato para analisar os resultados:", lista_candidatos)
+        
+        with col_btn:
+            st.write("")
+            script_pdf = f"""
+            <script>
+                function imprimirRelatorio() {{
+                    try {{
+                        var doc = window.parent.document;
+                        var tituloAntigo = doc.title;
+                        doc.title = "MapeiaAI - Implantta Consultoria - {candidato_sel}";
+                        window.parent.print();
+                        setTimeout(function() {{ doc.title = tituloAntigo; }}, 2000);
+                    }} catch(e) {{
+                        window.print();
+                    }}
                 }}
-            }}
-        </script>
-        <button onclick="imprimirRelatorio()" style="
-            background-color: #DDA15E; color: white; border: none; padding: 10px 15px; 
-            border-radius: 5px; cursor: pointer; font-family: sans-serif; font-weight: bold;
-            font-size: 14px; width: 100%; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.3s;
-            margin-top: 10px;
-        " onmouseover="this.style.backgroundColor='#c98d4b'" onmouseout="this.style.backgroundColor='#DDA15E'">
-            📥 Salvar PDF do Candidato
-        </button>
-        """
-        components.html(script_pdf, height=75)
+            </script>
+            <button onclick="imprimirRelatorio()" style="
+                background-color: #DDA15E; color: white; border: none; padding: 10px 15px; 
+                border-radius: 5px; cursor: pointer; font-family: sans-serif; font-weight: bold;
+                font-size: 14px; width: 100%; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.3s;
+                margin-top: 10px;
+            " onmouseover="this.style.backgroundColor='#c98d4b'" onmouseout="this.style.backgroundColor='#DDA15E'">
+                📥 Salvar PDF do Candidato
+            </button>
+            """
+            components.html(script_pdf, height=75)
     
     if df_dados is not None and "Nome" in df_dados.columns and candidato_sel in df_dados["Nome"].values:
         linha_cand = df_dados[df_dados["Nome"] == candidato_sel].iloc[0]
@@ -281,23 +303,23 @@ if tela == "👤 Perfil do Candidato":
         valores_canais = calcular_sistema_representacional(linha_cand)
         valores_animais = calcular_perfil_animais(linha_cand)
         
-        col_a, col_b, col_c, col_d = st.columns(4)
-        col_a.info(f"**Candidato:**\n\n**{candidato_sel}**")
-        col_b.info(f"**Vaga / Função:**\n\n{vaga_alvo}")
-        col_c.info(f"**Empresa:**\n\n{empresa_alvo}")
-        col_d.info(f"**Data da Aplicação:**\n\n{data_teste}")
+        with st.container():
+            col_a, col_b, col_c, col_d = st.columns(4)
+            col_a.info(f"**Candidato:**\n\n**{candidato_sel}**")
+            col_b.info(f"**Vaga / Função:**\n\n{vaga_alvo}")
+            col_c.info(f"**Empresa:**\n\n{empresa_alvo}")
+            col_d.info(f"**Data:**\n\n{data_teste}")
+                
+            st.markdown("<br>", unsafe_allow_html=True)
+        
+        # 🟢 BLOCO 1: GRÁFICO DOS ANIMAIS (LAYOUT VERTICAL PARA PDF)
+        with st.container():
+            st.markdown("### 🦁 Perfil Comportamental Predominante")
             
-        st.markdown("<br>", unsafe_allow_html=True)
-        
-        st.markdown("### 🦁 Perfil Comportamental Predominante")
-        
-        perfis_ordenados = sorted(valores_animais.items(), key=lambda x: x[1], reverse=True)
-        top1_nome, top1_valor = perfis_ordenados[0]
-        top2_nome, top2_valor = perfis_ordenados[1]
-            
-        col_animais1, col_animais2 = st.columns([1, 1.3])
-        
-        with col_animais1:
+            perfis_ordenados = sorted(valores_animais.items(), key=lambda x: x[1], reverse=True)
+            top1_nome, top1_valor = perfis_ordenados[0]
+            top2_nome, top2_valor = perfis_ordenados[1]
+                
             df_animais = pd.DataFrame({
                 "Perfil": list(valores_animais.keys()), 
                 "Percentual (%)": list(valores_animais.values())
@@ -312,70 +334,71 @@ if tela == "👤 Perfil do Candidato":
             )
             fig_animais.update_traces(textposition='inside', textinfo='percent+label')
             
+            # Gráfico centralizado e amplo para ganhar destaque!
             fig_animais.update_layout(
-                height=260, 
+                height=300, 
                 showlegend=False, 
-                margin=dict(t=0, b=0, l=0, r=0)
+                margin=dict(t=10, b=10, l=0, r=0)
             )
             st.plotly_chart(fig_animais, use_container_width=True)
             
-        with col_animais2:
+            # Parecer Analítico posicionado logo abaixo do Gráfico
             st.markdown("#### 📊 Parecer Analítico")
             st.markdown(f"**Distribuição de Perfis:** Predominância Primária de **{top1_nome}** ({top1_valor}%) com suporte Secundário de **{top2_nome}** ({top2_valor}%).")
             st.info("💡 Logo abaixo, detalhamos os Pontos Fortes e os Pontos de Atenção baseados nesta distribuição comportamental.")
 
-        detalhes_perfis = {
-            "Tubarão": {
-                "fortes": "Foco em resultados, iniciativa, senso de urgência, coragem para decidir e alta resiliência sob pressão.",
-                "fracos": "Dificuldade em delegar, tendência ao autoritarismo, baixa paciência com processos lentos e inclinação a atropelar o planejamento."
-            },
-            "Lobo": {
-                "fortes": "Organização cirúrgica, atenção extrema a detalhes, disciplina, lealdade a regras e alta previsibilidade na entrega.",
-                "fracos": "Resistência acentuada a mudanças repentinas, perfeccionismo que pode gerar lentidão e dificuldade de agir no improviso."
-            },
-            "Águia": {
-                "fortes": "Pensamento disruptivo, criatividade, facilidade de adaptação, olhar de longo prazo e entusiasmo para propor inovações.",
-                "fracos": "Falta de linearidade na execução, propensão a perder o foco antes de concluir tarefas repetitivas e indisciplina com prazos rígidos."
-            },
-            "Gato": {
-                "fortes": "Excelente comunicação interpessoal, mediação de conflitos, facilidade para trabalhar em equipe, empatia e construção de harmonia.",
-                "fracos": "Dificuldade para dar feedbacks duros, tendência a evitar confrontos necessários e vulnerabilidade a ambientes altamente agressivos."
+        # 🟢 BLOCO 2: CAIXAS DE PONTOS FORTES E FRACOS (EMPILHADAS VERTICALMENTE)
+        with st.container():
+            detalhes_perfis = {
+                "Tubarão": {
+                    "fortes": "Foco em resultados, iniciativa, senso de urgência, coragem para decidir e alta resiliência sob pressão.",
+                    "fracos": "Dificuldade em delegar, tendência ao autoritarismo, baixa paciência com processos lentos e inclinação a atropelar o planejamento."
+                },
+                "Lobo": {
+                    "fortes": "Organização cirúrgica, atenção extrema a detalhes, disciplina, lealdade a regras e alta previsibilidade na entrega.",
+                    "fracos": "Resistência acentuada a mudanças repentinas, perfeccionismo que pode gerar lentidão e dificuldade de agir no improviso."
+                },
+                "Águia": {
+                    "fortes": "Pensamento disruptivo, criatividade, facilidade de adaptação, olhar de longo prazo e entusiasmo para propor inovações.",
+                    "fracos": "Falta de linearidade na execução, propensão a perder o foco antes de concluir tarefas repetitivas e indisciplina com prazos rígidos."
+                },
+                "Gato": {
+                    "fortes": "Excelente comunicação interpessoal, mediação de conflitos, facilidade para trabalhar em equipe, empatia e construção de harmonia.",
+                    "fracos": "Dificuldade para dar feedbacks duros, tendência a evitar confrontos necessários e vulnerabilidade a ambientes altamente agressivos."
+                }
             }
-        }
-        
-        vaga_lower = str(vaga_alvo).lower()
-        tipo_vaga = "Geral"
-        if any(k in vaga_lower for k in ["contab", "financ", "fiscal", "lobo", "adm", "process", "ti", "suport", "auditor", "qualidad"]):
-            tipo_vaga = "Processos/Contábil/Analítico"
-            perfis_ideais = ["Lobo", "Tubarão"]
-        elif any(k in vaga_lower for k in ["vend", "comercial", "geren", "diretor", "lider", "meta", "tubarao", "expansao"]):
-            tipo_vaga = "Comercial/Liderança/Execução"
-            perfis_ideais = ["Tubarão", "Águia"]
-        elif any(k in vaga_lower for k in ["rh", "human", "atend", "gato", "client", "relacionamento", "cs", "sucesso"]):
-            tipo_vaga = "Pessoas/Atendimento/Suporte"
-            perfis_ideais = ["Gato", "Águia"]
-        else:
-            tipo_vaga = "Estratégico/Geral"
-            perfis_ideais = [top1_nome, top2_nome]
             
-        convergente = (top1_nome in perfis_ideais)
+            vaga_lower = str(vaga_alvo).lower()
+            tipo_vaga = "Geral"
+            if any(k in vaga_lower for k in ["contab", "financ", "fiscal", "lobo", "adm", "process", "ti", "suport", "auditor", "qualidad"]):
+                tipo_vaga = "Processos/Contábil/Analítico"
+                perfis_ideais = ["Lobo", "Tubarão"]
+            elif any(k in vaga_lower for k in ["vend", "comercial", "geren", "diretor", "lider", "meta", "tubarao", "expansao"]):
+                tipo_vaga = "Comercial/Liderança/Execução"
+                perfis_ideais = ["Tubarão", "Águia"]
+            elif any(k in vaga_lower for k in ["rh", "human", "atend", "gato", "client", "relacionamento", "cs", "sucesso"]):
+                tipo_vaga = "Pessoas/Atendimento/Suporte"
+                perfis_ideais = ["Gato", "Águia"]
+            else:
+                tipo_vaga = "Estratégico/Geral"
+                perfis_ideais = [top1_nome, top2_nome]
+                
+            convergente = (top1_nome in perfis_ideais)
 
-        col_fortes, col_fracos = st.columns(2)
-        with col_fortes:
+            # Caixas empilhadas verticalmente para o PDF ler de forma limpa!
             with st.expander("⭐ Pontos Fortes do Candidato", expanded=True):
                 st.write(f"• **Fator {top1_nome}:** {detalhes_perfis[top1_nome]['fortes']}")
                 if top2_valor > 15:
                     st.write(f"• **Fator {top2_nome}:** {detalhes_perfis[top2_nome]['fortes']}")
                     
-        with col_fracos:
             with st.expander("⚠️ Pontos de Atenção (Fraquezas)", expanded=True):
                 st.write(f"• **Riscos de {top1_nome}:** {detalhes_perfis[top1_nome]['fracos']}")
                 if top2_valor > 15:
                     st.write(f"• **Riscos de {top2_nome}:** {detalhes_perfis[top2_nome]['fracos']}")
 
-        st.markdown("<br>", unsafe_allow_html=True)
+            st.markdown("<br>", unsafe_allow_html=True)
 
-        # 🚨 NOVO CONTÊINER AGRUPADOR (Mantém o título colado ao texto no PDF)
+        # 🎯 BLOCO 3: CONCLUSÃO (MANTIDO EM COLUNAS LARGAS)
         with st.container():
             st.markdown("#### 🎯 Alinhamento com a Função & Conclusão")
             
@@ -406,12 +429,11 @@ if tela == "👤 Perfil do Candidato":
                     else:
                         st.error("❌ RECOMENDAÇÃO: **DESALINHADO À VAGA**")
                         st.caption("🚨 **Justificativa:** Desalinhamento natural entre a energia comportamental do candidato e as rotinas diárias da função.")
-                    
-        st.markdown("---")
+                        
+            st.markdown("---")
         
-        col_pnl1, col_pnl2 = st.columns([1, 1.2])
-        
-        with col_pnl1:
+        # 🔵 BLOCO 4: PNL (LAYOUT VERTICAL)
+        with st.container():
             st.subheader("📊 Sistema Representacional (PNL)")
             
             df_chart = pd.DataFrame({
@@ -429,23 +451,24 @@ if tela == "👤 Perfil do Candidato":
                 color_discrete_map=cores_canais
             )
             
+            # Gráfico Largo em destaque
             fig.update_layout(
-                height=240, 
+                height=300, 
                 showlegend=False, 
-                margin=dict(t=0, b=0, l=0, r=0)
+                margin=dict(t=10, b=10, l=0, r=0)
             )
             st.plotly_chart(fig, use_container_width=True)
             
-        with col_pnl2:
-            st.subheader("🧠 Manual de Relacionamento (Liderança)")
+            # Manual de Relacionamento posicionado logo abaixo do Gráfico PNL
+            st.subheader("🧠 Manual de Relacionamento")
             st.info("💡 **Dica para a Gestão:** Use o canal predominante para guiar a comunicação diária com o colaborador.")
             
             st.markdown(f"""
-            Como o candidato possui o canal **{predominante_pnl}** mais elevado, em interações de feedback, treinamento ou alinhamento de metas, aja da seguinte forma:
-            * **Se for Visual:** Use termos como *"Veja bem"*, *"Imagine esse cenário"*. Mantenha contato visual e apoie-se em apresentações gráficas.
+            Como o candidato possui o canal **{predominante_pnl}** mais elevado, aja da seguinte forma:
+            * **Se for Visual:** Use termos como *"Veja bem"*, *"Imagine esse cenário"*. Mantenha contato visual e apoie-se em imagens.
             * **Se for Auditivo:** Module o tom de voz, evite dar ordens em ambientes barulhentos. Use *"Me conte o que acha"*.
             * **Se for Cinestésico:** Crie um clima acolhedor antes de corrigir, valorize o lado humano e dê espaço para ele experimentar na prática.
-            * **Se for Digital:** Vá direto ao ponto apresentando fatos, planilhas e lógicas claras. Evite excesso de apelo emocional em decisões críticas.
+            * **Se for Digital:** Vá direto ao ponto apresentando fatos, planilhas e lógicas claras. Evite apelo puramente emocional.
             """)
             
             st.markdown("---")
