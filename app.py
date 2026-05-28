@@ -31,8 +31,18 @@ st.sidebar.title("Painel de Controle")
 tela = st.sidebar.radio("Navegar para:", ["📊 Dashboard Geral", "👤 Perfil do Candidato"])
 
 # Definição das cores da marca
-cores_canais = {"Visual": "#00B5B5", "Auditivo": "#33CCCC", "Cinestésico": "#004B8D", "Digital (Lógico)": "#FF7A00"}
-cores_animais = {"Águia": "#FFD700", "Gato": "#FF69B4", "Lobo": "#696969", "Tubarão": "#DC143C"}
+cores_canais = {
+    "Visual": "#00B5B5", 
+    "Auditivo": "#33CCCC", 
+    "Cinestésico": "#004B8D", 
+    "Digital (Lógico)": "#FF7A00"
+}
+cores_animais = {
+    "Águia": "#FFD700", 
+    "Gato": "#FF69B4", 
+    "Lobo": "#696969", 
+    "Tubarão": "#DC143C"
+}
 
 # =====================================================================
 # 🔌 CONEXÃO E AUTO-LIMPEZA DA PLANILHA (BLINDADO)
@@ -78,10 +88,34 @@ df_dados = carregar_dados_planilha()
 # 🧮 1. PROCESSAMENTO PNL
 # =====================================================================
 def calcular_sistema_representacional(linha):
-    colunas_visual = ["Eu tomo decisões importantes baseados em: [o que me parece melhor]", "Durante uma discussão eu sou mais influenciado por: [se eu posso ou não ver o argumento da outra pessoa]", "Eu comunico mais facilmente o que se passa comigo: [do modo como me visto e aparento]", "É muito fácil para mim: [escolher as combinações de cores mais ricas e atraentes]", "Eu me percebo assim: [eu respondo fortemente às cores e à aparência de uma sala]"]
-    colunas_auditivo = ["Eu tomo decisões importantes baseados em: [o que melhor me soar melhor]", "Durante uma discussão eu sou mais influenciado por: [tom de voz da outra pessoa]", "Eu comunico mais facilmente o que se passa comigo: [pelo tom da minha voz]", "É muito fácil para mim: [achar o volume e a sintonia ideais num sistema de som]", "Eu me percebo assim: [Se estou muito em sintonia com os sons do ambiente]"]
-    colunas_cinestesico = ["Eu tomo decisões importantes baseados em: [intuição]", "Durante uma discussão eu sou mais influenciado por: [se eu entro em contato ou não com os sentimentos reais do outro]", "Eu comunico mais facilmente o que se passa comigo: [pelos sentimentos que compartilho]", "É muito fácil para mim: [escolher os móveis mais confortáveis]", "Eu me percebo assim: [eu sou muito sensível à maneira como a roupa veste o meu corpo]"]
-    colunas_digital = ["Eu tomo decisões importantes baseados em: [um estudo preciso e minucioso do assunto]", "Durante uma discussão eu sou mais influenciado por: [a lógica do argumento da outra pessoa]", "Eu comunico mais facilmente o que se passa comigo: [pelas palavras que escolho]", "É muito fácil para mim: [selecionar o ponto mais relevante relativo a um assunto interessante]", "Eu me percebo assim: [se sou muito capaz de raciocinar com fatos e dados novos]"]
+    colunas_visual = [
+        "Eu tomo decisões importantes baseados em: [o que me parece melhor]", 
+        "Durante uma discussão eu sou mais influenciado por: [se eu posso ou não ver o argumento da outra pessoa]", 
+        "Eu comunico mais facilmente o que se passa comigo: [do modo como me visto e aparento]", 
+        "É muito fácil para mim: [escolher as combinações de cores mais ricas e atraentes]", 
+        "Eu me percebo assim: [eu respondo fortemente às cores e à aparência de uma sala]"
+    ]
+    colunas_auditivo = [
+        "Eu tomo decisões importantes baseados em: [o que melhor me soar melhor]", 
+        "Durante uma discussão eu sou mais influenciado por: [tom de voz da outra pessoa]", 
+        "Eu comunico mais facilmente o que se passa comigo: [pelo tom da minha voz]", 
+        "É muito fácil para mim: [achar o volume e a sintonia ideais num sistema de som]", 
+        "Eu me percebo assim: [Se estou muito em sintonia com os sons do ambiente]"
+    ]
+    colunas_cinestesico = [
+        "Eu tomo decisões importantes baseados em: [intuição]", 
+        "Durante uma discussão eu sou mais influenciado por: [se eu entro em contato ou não com os sentimentos reais do outro]", 
+        "Eu comunico mais facilmente o que se passa comigo: [pelos sentimentos que compartilho]", 
+        "É muito fácil para mim: [escolher os móveis mais confortáveis]", 
+        "Eu me percebo assim: [eu sou muito sensível à maneira como a roupa veste o meu corpo]"
+    ]
+    colunas_digital = [
+        "Eu tomo decisões importantes baseados em: [um estudo preciso e minucioso do assunto]", 
+        "Durante uma discussão eu sou mais influenciado por: [a lógica do argumento da outra pessoa]", 
+        "Eu comunico mais facilmente o que se passa comigo: [pelas palavras que escolho]", 
+        "É muito fácil para mim: [selecionar o ponto mais relevante relativo a um assunto interessante]", 
+        "Eu me percebo assim: [se sou muito capaz de raciocinar com fatos e dados novos]"
+    ]
     
     v_score = sum([pd.to_numeric(linha.get(col, 0), errors='coerce') for col in colunas_visual])
     a_score = sum([pd.to_numeric(linha.get(col, 0), errors='coerce') for col in colunas_auditivo])
@@ -96,7 +130,12 @@ def calcular_sistema_representacional(linha):
     total = v_score + a_score + c_score + d_score
     
     if total > 0:
-        return {"Visual": round((v_score / total) * 100, 1), "Auditivo": round((a_score / total) * 100, 1), "Cinestésico": round((c_score / total) * 100, 1), "Digital (Lógico)": round((d_score / total) * 100, 1)}
+        return {
+            "Visual": round((v_score / total) * 100, 1), 
+            "Auditivo": round((a_score / total) * 100, 1), 
+            "Cinestésico": round((c_score / total) * 100, 1), 
+            "Digital (Lógico)": round((d_score / total) * 100, 1)
+        }
     return {"Visual": 25.0, "Auditivo": 25.0, "Cinestésico": 25.0, "Digital (Lógico)": 25.0}
 
 # =====================================================================
@@ -263,7 +302,6 @@ def calcular_perfil_animais(linha):
         if pergunta in linha:
             resposta_cand = str(linha.get(pergunta, "")).strip().lower()
             for resp_chave, animal in alternativas.items():
-                # Removemos espaços extras para garantir a precisão no match
                 if resp_chave.strip().lower() in resposta_cand:
                     pontos[animal] += 1
                     total_respondido += 1
@@ -296,13 +334,11 @@ if tela == "👤 Perfil do Candidato":
     if df_dados is not None and "Nome" in df_dados.columns and candidato_sel in df_dados["Nome"].values:
         linha_cand = df_dados[df_dados["Nome"] == candidato_sel].iloc[0]
         
-        # Pega as colunas com segurança
         vaga_alvo = linha_cand.get("Setor", "Não Informado")
         empresa_alvo = linha_cand.get("Empresa", "Não Informada")
         email_cand = linha_cand.get("Endereço de e-mail", "Não Informado")
         data_teste = linha_cand.get("Carimbo de data/hora", linha_cand.get("Data:", "Não Informada"))
         
-        # Faz os cálculos
         valores_canais = calcular_sistema_representacional(linha_cand)
         valores_animais = calcular_perfil_animais(linha_cand)
         
@@ -325,9 +361,18 @@ if tela == "👤 Perfil do Candidato":
         col_animais1, col_animais2 = st.columns([1, 1.2])
         
         with col_animais1:
-            df_animais = pd.DataFrame({"Perfil": list(valores_animais.keys()), "Percentual (%)": list(valores_animais.values())})
-            fig_animais = px.pie(df_animais, names="Perfil", values="Percentual (%)", color="Perfil", 
-                                 color_discrete_map=cores_animais, hole=0.4)
+            df_animais = pd.DataFrame({
+                "Perfil": list(valores_animais.keys()), 
+                "Percentual (%)": list(valores_animais.values())
+            })
+            fig_animais = px.pie(
+                df_animais, 
+                names="Perfil", 
+                values="Percentual (%)", 
+                color="Perfil", 
+                color_discrete_map=cores_animais, 
+                hole=0.4
+            )
             fig_animais.update_traces(textposition='inside', textinfo='percent+label')
             fig_animais.update_layout(showlegend=False)
             st.plotly_chart(fig_animais, use_container_width=True)
@@ -355,4 +400,27 @@ if tela == "👤 Perfil do Candidato":
         
         with col_pnl1:
             st.subheader("📊 Sistema Representacional (PNL)")
-            df_chart = pd.DataFrame({"Canal": list(valores_canais.keys()), "Percentagem (%)": list
+            
+            # Aqui estava o pequeno erro anterior (agora corrigido com quebras de linha!)
+            df_chart = pd.DataFrame({
+                "Canal": list(valores_canais.keys()), 
+                "Percentagem (%)": list(valores_canais.values())
+            })
+            
+            fig = px.bar(
+                df_chart, 
+                x="Canal", 
+                y="Percentagem (%)", 
+                color="Canal",
+                text="Percentagem (%)", 
+                template="streamlit",
+                color_discrete_map=cores_canais
+            )
+            fig.update_layout(showlegend=False)
+            st.plotly_chart(fig, use_container_width=True)
+            
+        with col_pnl2:
+            st.subheader("🧠 Parecer de Engenharia de Perfil")
+            st.success("📝 **Status:** Dados integrados e tabulados via API com sucesso.")
+            
+            predominante_pnl =
