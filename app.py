@@ -39,7 +39,6 @@ st.markdown("""
     section[data-testid="stSidebar"] * {
         color: white !important;
     }
-    /* Deixar o botão selecionado do menu mais visível */
     div[role="radiogroup"] label {
         color: white !important;
     }
@@ -61,9 +60,10 @@ st.markdown("""
             margin-top: 0rem !important;
         }
 
-        /* Mantém apenas os gráficos protegidos de corte, mas permite que os textos fluam */
+        /* Mantém os gráficos e blocos protegidos de corte */
         .stPlotlyChart { page-break-inside: avoid !important; margin-bottom: 5px; }
         [data-testid="stExpander"] { page-break-inside: avoid !important; margin-bottom: 5px; }
+        [data-testid="stVerticalBlock"] { page-break-inside: avoid !important; }
         
         /* Força a impressão das cores corporativas */
         * {
@@ -244,7 +244,7 @@ if tela == "👤 Perfil do Candidato":
     with col_sel:
         candidato_sel = st.selectbox("Selecione o Candidato para analisar os resultados:", lista_candidatos)
     
-    # 🌟 BOTÃO INTELIGENTE DE DOWNLOAD (Altura ajustada para não cortar)
+    # 🌟 BOTÃO INTELIGENTE DE DOWNLOAD
     with col_btn:
         st.write("")
         script_pdf = f"""
@@ -270,7 +270,7 @@ if tela == "👤 Perfil do Candidato":
             📥 Salvar PDF do Candidato
         </button>
         """
-        components.html(script_pdf, height=75) # Altura aumentada para garantir que não corta!
+        components.html(script_pdf, height=75)
     
     if df_dados is not None and "Nome" in df_dados.columns and candidato_sel in df_dados["Nome"].values:
         linha_cand = df_dados[df_dados["Nome"] == candidato_sel].iloc[0]
@@ -292,9 +292,14 @@ if tela == "👤 Perfil do Candidato":
             
         st.markdown("<br>", unsafe_allow_html=True)
         
-        # 🟢 SEÇÃO 1: TESTE DOS ANIMAIS
+        # 🟢 BLOCO 1: GRÁFICO DOS ANIMAIS E RESUMO
         st.markdown("### 🦁 Perfil Comportamental Predominante")
-        col_animais1, col_animais2 = st.columns([1, 1.2])
+        
+        perfis_ordenados = sorted(valores_animais.items(), key=lambda x: x[1], reverse=True)
+        top1_nome, top1_valor = perfis_ordenados[0]
+        top2_nome, top2_valor = perfis_ordenados[1]
+            
+        col_animais1, col_animais2 = st.columns([1, 1.3])
         
         with col_animais1:
             df_animais = pd.DataFrame({
@@ -311,9 +316,9 @@ if tela == "👤 Perfil do Candidato":
             )
             fig_animais.update_traces(textposition='inside', textinfo='percent+label')
             
-            # ✨ GRÁFICO ACHATADO (height=250 para otimizar espaço no PDF)
+            # ✨ GRÁFICO COM TAMANHO DE DESTAQUE RESTAURADO (height=320)
             fig_animais.update_layout(
-                height=250, 
+                height=320, 
                 showlegend=False, 
                 margin=dict(t=5, b=5, l=5, r=5)
             )
@@ -321,55 +326,56 @@ if tela == "👤 Perfil do Candidato":
             
         with col_animais2:
             st.markdown("#### 📊 Parecer Analítico")
-            
-            perfis_ordenados = sorted(valores_animais.items(), key=lambda x: x[1], reverse=True)
-            top1_nome, top1_valor = perfis_ordenados[0]
-            top2_nome, top2_valor = perfis_ordenados[1]
-            
-            detalhes_perfis = {
-                "Tubarão": {
-                    "fortes": "Foco em resultados, iniciativa, senso de urgência, coragem para decidir e alta resiliência sob pressão.",
-                    "fracos": "Dificuldade em delegar, tendência ao autoritarismo, baixa paciência com processos lentos e inclinação a atropelar o planejamento."
-                },
-                "Lobo": {
-                    "fortes": "Organização cirúrgica, atenção extrema a detalhes, disciplina, lealdade a regras e alta previsibilidade na entrega.",
-                    "fracos": "Resistência acentuada a mudanças repentinas, perfeccionismo que pode gerar lentidão e dificuldade de agir no improviso."
-                },
-                "Águia": {
-                    "fortes": "Pensamento disruptivo, criatividade, facilidade de adaptação, olhar de longo prazo e entusiasmo para propor inovações.",
-                    "fracos": "Falta de linearidade na execução, propensão a perder o foco antes de concluir tarefas repetitivas e indisciplina com prazos rígidos."
-                },
-                "Gato": {
-                    "fortes": "Excelente comunicação interpessoal, mediação de conflitos, facilidade para trabalhar em equipe, empatia e construção de harmonia.",
-                    "fracos": "Dificuldade para dar feedbacks duros, tendência a evitar confrontos necessários e vulnerabilidade a ambientes altamente agressivos."
-                }
-            }
-            
-            vaga_lower = str(vaga_alvo).lower()
-            tipo_vaga = "Geral"
-            
-            if any(k in vaga_lower for k in ["contab", "financ", "fiscal", "lobo", "adm", "process", "ti", "suport", "auditor", "qualidad"]):
-                tipo_vaga = "Processos/Contábil/Analítico"
-                perfis_ideais = ["Lobo", "Tubarão"]
-            elif any(k in vaga_lower for k in ["vend", "comercial", "geren", "diretor", "lider", "meta", "tubarao", "expansao"]):
-                tipo_vaga = "Comercial/Liderança/Execução"
-                perfis_ideais = ["Tubarão", "Águia"]
-            elif any(k in vaga_lower for k in ["rh", "human", "atend", "gato", "client", "relacionamento", "cs", "sucesso"]):
-                tipo_vaga = "Pessoas/Atendimento/Suporte"
-                perfis_ideais = ["Gato", "Águia"]
-            else:
-                tipo_vaga = "Estratégico/Geral"
-                perfis_ideais = [top1_nome, top2_nome]
-                
-            convergente = (top1_nome in perfis_ideais)
-            
             st.markdown(f"**Distribuição de Perfis:** Predominância Primária de **{top1_nome}** ({top1_valor}%) com suporte Secundário de **{top2_nome}** ({top2_valor}%).")
+            st.info("💡 Logo abaixo, detalhamos os Pontos Fortes e os Pontos de Atenção baseados nesta distribuição comportamental.")
+
+        # 🟢 BLOCO 2 (NOVO LAYOUT): CAIXAS DE TEXTO LADO A LADO ABAIXO DO GRÁFICO
+        detalhes_perfis = {
+            "Tubarão": {
+                "fortes": "Foco em resultados, iniciativa, senso de urgência, coragem para decidir e alta resiliência sob pressão.",
+                "fracos": "Dificuldade em delegar, tendência ao autoritarismo, baixa paciência com processos lentos e inclinação a atropelar o planejamento."
+            },
+            "Lobo": {
+                "fortes": "Organização cirúrgica, atenção extrema a detalhes, disciplina, lealdade a regras e alta previsibilidade na entrega.",
+                "fracos": "Resistência acentuada a mudanças repentinas, perfeccionismo que pode gerar lentidão e dificuldade de agir no improviso."
+            },
+            "Águia": {
+                "fortes": "Pensamento disruptivo, criatividade, facilidade de adaptação, olhar de longo prazo e entusiasmo para propor inovações.",
+                "fracos": "Falta de linearidade na execução, propensão a perder o foco antes de concluir tarefas repetitivas e indisciplina com prazos rígidos."
+            },
+            "Gato": {
+                "fortes": "Excelente comunicação interpessoal, mediação de conflitos, facilidade para trabalhar em equipe, empatia e construção de harmonia.",
+                "fracos": "Dificuldade para dar feedbacks duros, tendência a evitar confrontos necessários e vulnerabilidade a ambientes altamente agressivos."
+            }
+        }
+        
+        vaga_lower = str(vaga_alvo).lower()
+        tipo_vaga = "Geral"
+        
+        if any(k in vaga_lower for k in ["contab", "financ", "fiscal", "lobo", "adm", "process", "ti", "suport", "auditor", "qualidad"]):
+            tipo_vaga = "Processos/Contábil/Analítico"
+            perfis_ideais = ["Lobo", "Tubarão"]
+        elif any(k in vaga_lower for k in ["vend", "comercial", "geren", "diretor", "lider", "meta", "tubarao", "expansao"]):
+            tipo_vaga = "Comercial/Liderança/Execução"
+            perfis_ideais = ["Tubarão", "Águia"]
+        elif any(k in vaga_lower for k in ["rh", "human", "atend", "gato", "client", "relacionamento", "cs", "sucesso"]):
+            tipo_vaga = "Pessoas/Atendimento/Suporte"
+            perfis_ideais = ["Gato", "Águia"]
+        else:
+            tipo_vaga = "Estratégico/Geral"
+            perfis_ideais = [top1_nome, top2_nome]
             
+        convergente = (top1_nome in perfis_ideais)
+
+        # Divisão em duas colunas logo abaixo do gráfico para não "esmagar" a visualização
+        col_fortes, col_fracos = st.columns(2)
+        with col_fortes:
             with st.expander("⭐ Pontos Fortes do Candidato", expanded=True):
                 st.write(f"• **Fator {top1_nome}:** {detalhes_perfis[top1_nome]['fortes']}")
                 if top2_valor > 15:
                     st.write(f"• **Fator {top2_nome}:** {detalhes_perfis[top2_nome]['fortes']}")
                     
+        with col_fracos:
             with st.expander("⚠️ Pontos de Atenção (Fraquezas)", expanded=True):
                 st.write(f"• **Riscos de {top1_nome}:** {detalhes_perfis[top1_nome]['fracos']}")
                 if top2_valor > 15:
@@ -377,7 +383,7 @@ if tela == "👤 Perfil do Candidato":
 
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # 🎯 BLOCO DA CONCLUSÃO E RECOMENDAÇÃO FINAL
+        # 🎯 BLOCO 3: CONCLUSÃO E RECOMENDAÇÃO FINAL
         st.markdown("#### 🎯 Alinhamento com a Função & Conclusão")
         
         predominante_pnl = max(valores_canais, key=valores_canais.get)
@@ -410,7 +416,7 @@ if tela == "👤 Perfil do Candidato":
                     
         st.markdown("---")
         
-        # 🔵 SEÇÃO 2: PNL
+        # 🔵 BLOCO 4: PNL
         col_pnl1, col_pnl2 = st.columns([1, 1.2])
         
         with col_pnl1:
@@ -431,9 +437,9 @@ if tela == "👤 Perfil do Candidato":
                 color_discrete_map=cores_canais
             )
             
-            # ✨ GRÁFICO ACHATADO (height=220)
+            # ✨ GRÁFICO COM TAMANHO RESTAURADO (height=280)
             fig.update_layout(
-                height=220, 
+                height=280, 
                 showlegend=False, 
                 margin=dict(t=5, b=5, l=5, r=5)
             )
