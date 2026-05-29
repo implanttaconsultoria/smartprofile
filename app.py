@@ -21,61 +21,35 @@ st.set_page_config(
 )
 
 # =====================================================================
-# 🎨 ESTILOS VISUAIS E MOTOR BLINDADO DE PDF (O VERDADEIRO FIX MOBILE)
+# 🎨 ESTILOS VISUAIS E MOTOR DE PDF (LAYOUT PERFEITO RESTAURADO)
 # =====================================================================
 st.markdown("""
     <style>
     /* Ajuste da Caixa de Seleção */
-    div[data-baseweb="select"] > div {
-        background-color: #2B5C8F !important;
-        color: white !important;
-        border-radius: 5px;
-    }
-    div[data-baseweb="select"] > div * {
-        color: white !important;
-    }
+    div[data-baseweb="select"] > div { background-color: #2B5C8F !important; color: white !important; border-radius: 5px; }
+    div[data-baseweb="select"] > div * { color: white !important; }
     
     /* Menu Lateral Branco */
-    section[data-testid="stSidebar"] * {
-        color: white !important;
-    }
-    div[role="radiogroup"] label {
-        color: white !important;
-    }
+    section[data-testid="stSidebar"] * { color: white !important; }
+    div[role="radiogroup"] label { color: white !important; }
     
-    /* 🚨 CONFIGURAÇÕES ESTRITAS PARA IMPRESSÃO */
+    /* 🚨 O SEGREDO DA IMPRESSÃO PERFEITA */
     @media print {
-        @page {
-            size: A4 portrait;
-            margin: 1cm; 
-        }
+        @page { size: A4 portrait; margin: 1cm; }
         
-        /* Oculta interface do sistema nativo */
+        /* Oculta toda a interface do sistema (Menus, Selectbox, iframes do botão) */
         section[data-testid="stSidebar"], 
         header[data-testid="stHeader"], 
         div[data-testid="stSelectbox"],
+        iframe, 
         .no-print,
         details:not([open]) { 
             display: none !important; 
-        }
-
-        /* 🚨 A GRANDE CORREÇÃO MOBILE: Não apagamos o iframe, apenas o escondemos visualmente! 
-           Isto impede o celular de crashar e corromper o PDF. */
-        iframe {
-            visibility: hidden !important;
             height: 0 !important;
-            width: 0 !important;
-            position: absolute !important;
-            border: none !important;
         }
 
-        /* Remove margens extras e restaura as colunas perfeitas */
-        .block-container {
-            padding: 0 !important;
-            margin: 0 !important;
-            max-width: 100% !important;
-            width: 100% !important;
-        }
+        /* Remove margens para aproveitar o espaço da folha A4 */
+        .block-container { padding: 0 !important; margin: 0 !important; max-width: 100% !important; width: 100% !important; }
 
         /* Compacta caixas e títulos */
         div[data-testid="stAlert"] { padding: 10px !important; margin-bottom: 5px !important; }
@@ -84,21 +58,13 @@ st.markdown("""
         h4 { font-size: 16px !important; margin-top: 5px !important; margin-bottom: 5px !important;}
         p { margin-bottom: 5px !important; }
 
-        /* Garante que os gráficos não cortem */
-        .stPlotlyChart, .stPlotlyChart > div, .js-plotly-plot, .plot-container {
-            overflow: visible !important;
-            page-break-inside: avoid !important;
-        }
-
-        /* Protege quebra de página mantendo a estrutura lateral (flexbox) */
+        /* Proteção total anti-corte nos gráficos e blocos */
+        .stPlotlyChart, .stPlotlyChart > div, .js-plotly-plot, .plot-container { overflow: visible !important; page-break-inside: avoid !important; }
         [data-testid="stHorizontalBlock"] { page-break-inside: avoid !important; align-items: flex-start !important; }
         [data-testid="stVerticalBlock"], [data-testid="stExpander"] { page-break-inside: avoid !important; margin-bottom: 5px !important; }
         h1, h2, h3, h4, h5, h6 { page-break-after: avoid !important; }
         
-        * {
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-        }
+        * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
     }
     </style>
 """, unsafe_allow_html=True)
@@ -134,7 +100,6 @@ def carregar_dados_planilha():
                     df.columns = row.values 
                     df = df.iloc[i+1:].reset_index(drop=True) 
                     break
-                    
         df = df.loc[:, df.columns.notna()]
         
         coluna_nome = None
@@ -146,7 +111,6 @@ def carregar_dados_planilha():
         if coluna_nome:
             df = df.dropna(subset=[coluna_nome])
             df = df.rename(columns={coluna_nome: "Nome"})
-            
         return df
     except Exception as e:
         st.error(f"Erro de conexão: {e}")
@@ -174,7 +138,6 @@ def calcular_sistema_representacional(linha):
     d_score = d_score if pd.notna(d_score) else 0
     
     total = v_score + a_score + c_score + d_score
-    
     if total > 0:
         return {"Visual": round((v_score / total) * 100, 1), "Auditivo": round((a_score / total) * 100, 1), "Cinestésico": round((c_score / total) * 100, 1), "Digital (Lógico)": round((d_score / total) * 100, 1)}
     return {"Visual": 25.0, "Auditivo": 25.0, "Cinestésico": 25.0, "Digital (Lógico)": 25.0}
@@ -236,14 +199,14 @@ else:
 # =====================================================================
 if tela == "👤 Perfil do Candidato":
     
-    # 🌟 CONTROLES NO TOPO ABSOLUTO
+    # 🌟 CONTROLES NO TOPO
     col_sel, col_btn = st.columns([3, 1.5])
     with col_sel:
         candidato_sel = st.selectbox("Selecione o Candidato:", lista_candidatos)
     
     with col_btn:
         st.write("")
-        # Botão limpo restaurado. Agora ele clica e não corrompe porque o iframe não recebe "display: none" no CSS!
+        # Botão que funciona maravilhosamente no PC
         script_pdf = f"""
         <script>
             function imprimirRelatorio() {{
@@ -252,15 +215,18 @@ if tela == "👤 Perfil do Candidato":
             }}
         </script>
         <button onclick="imprimirRelatorio()" style="
-            background-color: #DDA15E; color: white; border: none; padding: 15px 15px; 
+            background-color: #DDA15E; color: white; border: none; padding: 12px 15px; 
             border-radius: 5px; cursor: pointer; font-family: sans-serif; font-weight: bold;
             font-size: 14px; width: 100%; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.3s;
-            margin-top: 10px; -webkit-tap-highlight-color: transparent;
+            margin-top: 10px;
         " onmouseover="this.style.backgroundColor='#c98d4b'" onmouseout="this.style.backgroundColor='#DDA15E'">
-            📥 Salvar PDF do Candidato
+            💻 Imprimir / Salvar PDF
         </button>
+        <div style="text-align: center; color: #5A6B7C; font-family: sans-serif; font-size: 12px; margin-top: 8px;">
+            📱 <b>No telemóvel:</b> Use o menu <b>Partilhar > Imprimir</b> do seu navegador para evitar erros.
+        </div>
         """
-        components.html(script_pdf, height=80)
+        components.html(script_pdf, height=100)
         
     st.markdown('<hr class="no-print" style="margin: 0.5em 0;">', unsafe_allow_html=True)
     
@@ -274,7 +240,7 @@ if tela == "👤 Perfil do Candidato":
         valores_canais = calcular_sistema_representacional(linha_cand)
         valores_animais = calcular_perfil_animais(linha_cand)
         
-        # 🌟 CABEÇALHO OFICIAL DO RELATÓRIO
+        # 🌟 CABEÇALHO DO RELATÓRIO
         with st.container():
             col_titulo, col_logo = st.columns([3.5, 1.5])
             with col_titulo:
@@ -363,7 +329,7 @@ if tela == "👤 Perfil do Candidato":
                     if top2_valor > 15:
                         st.write(f"• **{top2_nome}:** {detalhes_perfis[top2_nome]['fracos']}")
 
-        # 🎯 BLOCO 3: CONCLUSÃO 
+        # 🎯 BLOCO 3: CONCLUSÃO (E INTELIGÊNCIA DA VAGA GERAL)
         with st.container():
             st.markdown("#### 🎯 Alinhamento com a Função & Conclusão")
             
