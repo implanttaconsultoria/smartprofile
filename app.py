@@ -4,6 +4,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 from streamlit_gsheets import GSheetsConnection
+import streamlit.components.v1 as components
 
 # =====================================================================
 # 🪄 TRUQUE DE COMPATIBILIDADE (RENDER)
@@ -20,7 +21,7 @@ st.set_page_config(
 )
 
 # =====================================================================
-# 🎨 ESTILOS VISUAIS E MOTOR BLINDADO DE PDF PARA CELULAR
+# 🎨 ESTILOS VISUAIS E MOTOR BLINDADO DE PDF PARA CELULAR E PC
 # =====================================================================
 st.markdown("""
     <style>
@@ -42,15 +43,14 @@ st.markdown("""
         color: white !important;
     }
     
-    /* 🚨 CONFIGURAÇÕES ESTRITAS PARA IMPRESSÃO (O ANTÍDOTO DO TELEMÓVEL) */
+    /* 🚨 CONFIGURAÇÕES ESTRITAS PARA IMPRESSÃO (O ANTÍDOTO DO CELULAR) */
     @media print {
         @page {
             size: A4 portrait;
             margin: 1cm; 
         }
         
-        /* DESLIGAR O FLEXBOX: Transforma as colunas e blocos em elementos simples.
-           Isto impede que o motor de PDF do telemóvel crash e corrompa o arquivo! */
+        /* Desliga o Flexbox: Impede o motor do celular de crashar e corromper o PDF */
         html, body, .stApp, main, .block-container, 
         [data-testid="stVerticalBlock"], 
         [data-testid="stHorizontalBlock"],
@@ -64,7 +64,7 @@ st.markdown("""
             float: none !important;
         }
         
-        /* Oculta interface e botões do sistema */
+        /* Oculta interface do sistema. NOTA: Deixamos de ocultar o iframe aqui! */
         section[data-testid="stSidebar"], 
         header[data-testid="stHeader"], 
         div[data-testid="stSelectbox"],
@@ -238,17 +238,32 @@ if tela == "👤 Perfil do Candidato":
     
     with col_btn:
         st.write("")
-        # 🚨 BOTÃO LIMPO: Apenas chama a função nativa de impressão (Sem truques, sem erros)
-        st.markdown("""
-            <button onclick="window.print()" class="no-print" style="
-                background-color: #DDA15E; color: white; border: none; padding: 10px 15px; 
-                border-radius: 5px; cursor: pointer; font-family: sans-serif; font-weight: bold;
-                font-size: 14px; width: 100%; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-                margin-top: 22px; -webkit-tap-highlight-color: transparent;
-            ">
-                📥 Salvar PDF do Candidato
-            </button>
-        """, unsafe_allow_html=True)
+        # 🚨 MAGIA DO CELULAR: Botão volta à caixa segura, mas esconde-se por dentro!
+        script_pdf = f"""
+        <style>
+            /* Esconde apenas o botão dentro desta caixa na hora de imprimir */
+            @media print {{
+                button {{ display: none !important; }}
+            }}
+        </style>
+        <script>
+            function imprimirRelatorio() {{
+                // Coloca o nome do candidato no arquivo
+                window.parent.document.title = "MapeiaAI - {candidato_sel}";
+                // Manda imprimir
+                window.parent.print();
+            }}
+        </script>
+        <button onclick="imprimirRelatorio()" style="
+            background-color: #DDA15E; color: white; border: none; padding: 12px 15px; 
+            border-radius: 5px; cursor: pointer; font-family: sans-serif; font-weight: bold;
+            font-size: 14px; width: 100%; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.3s;
+            margin-top: 10px; -webkit-tap-highlight-color: transparent;
+        " onmouseover="this.style.backgroundColor='#c98d4b'" onmouseout="this.style.backgroundColor='#DDA15E'">
+            📥 Salvar PDF do Candidato
+        </button>
+        """
+        components.html(script_pdf, height=75)
         
     st.markdown('<hr class="no-print" style="margin: 0.5em 0;">', unsafe_allow_html=True)
     
@@ -318,7 +333,7 @@ if tela == "👤 Perfil do Candidato":
                 "Gato": {"fortes": "Excelente comunicação interpessoal, mediação de conflitos, facilidade para trabalhar em equipe.", "fracos": "Dificuldade para dar feedbacks duros, tendência a evitar confrontos necessários."}
             }
             
-            # LÓGICA DE CRUZAMENTO DE VAGA CORRIGIDA (Com as palavras-chave novas)
+            # LÓGICA DE CRUZAMENTO DE VAGA CORRIGIDA
             vaga_lower = str(vaga_alvo).lower()
             
             if any(k in vaga_lower for k in ["contab", "financ", "fiscal", "lobo", "adm", "process", "ti", "suport", "auditor", "qualidad", "estoque", "logistica"]):
@@ -369,7 +384,6 @@ if tela == "👤 Perfil do Candidato":
                 st.markdown(f"**Engenharia de Cargo:** A vaga indicada (**{vaga_alvo}**) possui características do tipo *{tipo_vaga}*. Para este cenário, os perfis recomendados são **{', '.join(perfis_ideais)}**.\n\nO candidato combina essa estrutura com um canal predominantemente **{predominante_pnl}**, o que significa que ele {pnl_detalhes[predominante_pnl]}")
                 
             with col_concl2:
-                # Sistema avisa que a vaga requer Avaliação Humana caso não reconheça o nome
                 if is_general:
                     st.warning("🟡 RECOMENDAÇÃO: **AVALIAÇÃO DO GESTOR**")
                     st.caption("👀 **Justificativa:** O título da vaga não tem um perfil engessado. Avalie se as forças do candidato atendem à rotina.")
