@@ -4,6 +4,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 from streamlit_gsheets import GSheetsConnection
+import streamlit.components.v1 as components
 
 # =====================================================================
 # 🪄 TRUQUE DE COMPATIBILIDADE (RENDER)
@@ -59,10 +60,12 @@ st.markdown("""
             margin: 0 !important;
         }
         
-        /* Oculta interface e botões do sistema */
+        /* Oculta interface e botões do sistema, inclusive o nosso botão nativo */
         section[data-testid="stSidebar"], 
         header[data-testid="stHeader"], 
         div[data-testid="stSelectbox"],
+        iframe, 
+        #btn-imprimir,
         .no-print,
         details:not([open]) { 
             display: none !important; 
@@ -89,6 +92,11 @@ st.markdown("""
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
         }
+    }
+    
+    /* Efeito de hover (mouse em cima) no botão */
+    #btn-imprimir:hover {
+        background-color: #c98d4b !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -233,18 +241,32 @@ if tela == "👤 Perfil do Candidato":
     
     with col_btn:
         st.write("")
-        # 🚨 MAGIA MOBILE: Criamos um botão diretamente na raiz do HTML (sem iframes que corrompem o PDF)
-        botao_imprimir = f"""
-        <a href="#" onclick="document.title='MapeiaAI - {candidato_sel}'; window.print(); return false;" class="no-print" style="
-            display: block; text-align: center; background-color: #DDA15E; color: white;
-            padding: 10px 15px; border-radius: 5px; text-decoration: none; font-family: sans-serif;
-            font-weight: bold; font-size: 14px; width: 100%; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            transition: 0.3s; margin-top: 22px; -webkit-tap-highlight-color: transparent;
-        ">
-            📥 Salvar PDF do Candidato
-        </a>
-        """
-        st.markdown(botao_imprimir, unsafe_allow_html=True)
+        # 🚨 TRUQUE NINJA: Criamos um botão puro HTML que o Streamlit aceita
+        st.markdown(f"""
+            <button id="btn-imprimir" style="
+                background-color: #DDA15E; color: white; border: none; padding: 10px 15px; 
+                border-radius: 5px; cursor: pointer; font-family: sans-serif; font-weight: bold;
+                font-size: 14px; width: 100%; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.3s;
+                margin-top: 22px; -webkit-tap-highlight-color: transparent;
+            ">
+                📥 Salvar PDF do Candidato
+            </button>
+        """, unsafe_allow_html=True)
+        
+        # 🚨 CÓDIGO INVISÍVEL: Este código caça o botão na página e dá-lhe os "poderes" de impressão
+        components.html(f"""
+            <script>
+                const btn = window.parent.document.getElementById('btn-imprimir');
+                if (btn) {{
+                    btn.addEventListener('click', function() {{
+                        window.parent.document.title = "MapeiaAI - {candidato_sel}";
+                        setTimeout(function() {{
+                            window.parent.print();
+                        }}, 300);
+                    }});
+                }}
+            </script>
+        """, height=0)
         
     st.markdown('<hr class="no-print" style="margin: 0.5em 0;">', unsafe_allow_html=True)
     
@@ -258,7 +280,7 @@ if tela == "👤 Perfil do Candidato":
         valores_canais = calcular_sistema_representacional(linha_cand)
         valores_animais = calcular_perfil_animais(linha_cand)
         
-        # 🌟 2. CABEÇALHO OFICIAL DO RELATÓRIO
+        # 🌟 CABEÇALHO OFICIAL DO RELATÓRIO
         with st.container():
             col_titulo, col_logo = st.columns([3.5, 1.5])
             with col_titulo:
@@ -314,20 +336,25 @@ if tela == "👤 Perfil do Candidato":
                 "Gato": {"fortes": "Excelente comunicação interpessoal, mediação de conflitos, facilidade para trabalhar em equipe.", "fracos": "Dificuldade para dar feedbacks duros, tendência a evitar confrontos necessários."}
             }
             
+            # 🚨 LÓGICA DE CRUZAMENTO DE VAGA CORRIGIDA!
             vaga_lower = str(vaga_alvo).lower()
-            tipo_vaga = "Geral"
-            if any(k in vaga_lower for k in ["contab", "financ", "fiscal", "lobo", "adm", "process", "ti", "suport", "auditor", "qualidad"]):
+            
+            if any(k in vaga_lower for k in ["contab", "financ", "fiscal", "lobo", "adm", "process", "ti", "suport", "auditor", "qualidad", "estoque", "logistica"]):
                 tipo_vaga = "Processos/Contábil/Analítico"
                 perfis_ideais = ["Lobo", "Tubarão"]
-            elif any(k in vaga_lower for k in ["vend", "comercial", "geren", "diretor", "lider", "meta", "tubarao", "expansao"]):
+                is_general = False
+            elif any(k in vaga_lower for k in ["vend", "comercial", "geren", "diretor", "lider", "meta", "tubarao", "expansao", "negocio"]):
                 tipo_vaga = "Comercial/Liderança/Execução"
                 perfis_ideais = ["Tubarão", "Águia"]
-            elif any(k in vaga_lower for k in ["rh", "human", "atend", "gato", "client", "relacionamento", "cs", "sucesso"]):
+                is_general = False
+            elif any(k in vaga_lower for k in ["rh", "human", "atend", "gato", "client", "relacionamento", "cs", "sucesso", "pessoal", "dp", "psico", "recep"]):
                 tipo_vaga = "Pessoas/Atendimento/Suporte"
                 perfis_ideais = ["Gato", "Águia"]
+                is_general = False
             else:
-                tipo_vaga = "Estratégico/Geral"
-                perfis_ideais = [top1_nome, top2_nome]
+                tipo_vaga = "Função Dinâmica / Não Específica"
+                perfis_ideais = ["(Depende do escopo exato da vaga)"]
+                is_general = True
                 
             convergente = (top1_nome in perfis_ideais)
 
@@ -343,7 +370,7 @@ if tela == "👤 Perfil do Candidato":
                     if top2_valor > 15:
                         st.write(f"• **{top2_nome}:** {detalhes_perfis[top2_nome]['fracos']}")
 
-        # 🎯 BLOCO 3: CONCLUSÃO
+        # 🎯 BLOCO 3: CONCLUSÃO CORRIGIDA
         with st.container():
             st.markdown("#### 🎯 Alinhamento com a Função & Conclusão")
             
@@ -360,7 +387,11 @@ if tela == "👤 Perfil do Candidato":
                 st.markdown(f"**Engenharia de Cargo:** A vaga indicada (**{vaga_alvo}**) possui características do tipo *{tipo_vaga}*. Para este cenário, os perfis recomendados são **{', '.join(perfis_ideais)}**.\n\nO candidato combina essa estrutura com um canal predominantemente **{predominante_pnl}**, o que significa que ele {pnl_detalhes[predominante_pnl]}")
                 
             with col_concl2:
-                if convergente:
+                # Agora o sistema sabe lidar com vagas desconhecidas sem dar "Contratar" automaticamente!
+                if is_general:
+                    st.warning("🟡 RECOMENDAÇÃO: **AVALIAÇÃO DO GESTOR**")
+                    st.caption("👀 **Justificativa:** O título da vaga não tem um perfil engessado. Avalie se as forças do candidato atendem à rotina.")
+                elif convergente:
                     st.success("✅ RECOMENDAÇÃO: **CONTRATAR**")
                     st.caption("🏆 **Justificativa:** Alta aderência comportamental com o escopo da vaga.")
                 elif top2_nome in perfis_ideais:
