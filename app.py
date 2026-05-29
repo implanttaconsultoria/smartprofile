@@ -43,11 +43,11 @@ st.markdown("""
         color: white !important;
     }
     
-    /* Configurações Estritas para a Geração do PDF Perfeito */
+    /* Configurações Estritas para a Geração do PDF Perfeito (PC e Mobile) */
     @media print {
         @page {
             size: A4 portrait;
-            margin: 1cm; /* Margem reduzida para dar mais espaço ao conteúdo */
+            margin: 1cm; 
         }
         
         /* 🚨 MAGIA AQUI: Oculta botões, menus, caixas fechadas e elementos marcados como no-print! */
@@ -56,7 +56,7 @@ st.markdown("""
         div[data-testid="stSelectbox"],
         iframe, 
         .no-print,
-        details:not([open]) { /* Esconde o Expander de "Respostas Brutas" pois está fechado */
+        details:not([open]) { 
             display: none !important; 
             height: 0 !important;
         }
@@ -119,7 +119,7 @@ st.sidebar.markdown("---")
 st.sidebar.title("Painel de Controle")
 tela = st.sidebar.radio("Navegar para:", ["📊 Dashboard Geral", "👤 Perfil do Candidato"])
 
-# 🔥 PALETA DE CORES: SÓBRIA, PROFISSIONAL E COM ALTO CONTRASTE
+# 🔥 PALETA DE CORES
 cores_animais = {
     "Tubarão": "#2B5C8F",   
     "Lobo": "#5A6B7C",      
@@ -172,10 +172,10 @@ def carregar_dados_planilha():
 df_dados = carregar_dados_planilha()
 
 # =====================================================================
-# 🧮 1. PROCESSAMENTO PNL E ANIMAIS (FUNÇÕES)
+# 🧮 1. PROCESSAMENTO PNL E ANIMAIS
 # =====================================================================
 def calcular_sistema_representacional(linha):
-    colunas_visual = ["Eu tomo decisões importantes baseados em: [o que me parece melhor]", "Durante uma discussão eu sou mais influenciado por: [se eu posso ou não ver o argumento da outra pessoa]", "Eu comunico mais facilmente o que se passa comigo: [do modo como me visto e aparento]", "É muito fácil para mim: [escolher as combinations de cores mais ricas e atraentes]", "Eu me percebo assim: [eu respondo fortemente às cores e à aparência de uma sala]"]
+    colunas_visual = ["Eu tomo decisões importantes baseados em: [o que me parece melhor]", "Durante uma discussão eu sou mais influenciado por: [se eu posso ou não ver o argumento da outra pessoa]", "Eu comunico mais facilmente o que se passa comigo: [do modo como me visto e aparento]", "É muito fácil para mim: [escolher as combinações de cores mais ricas e atraentes]", "Eu me percebo assim: [eu respondo fortemente às cores e à aparência de uma sala]"]
     colunas_auditivo = ["Eu tomo decisões importantes baseados em: [o que melhor me soar melhor]", "Durante uma discussão eu sou mais influenciado por: [tom de voz da outra pessoa]", "Eu comunico mais facilmente o que se passa comigo: [pelo tom da minha voz]", "É muito fácil para mim: [achar o volume e a sintonia ideais num sistema de som]", "Eu me percebo assim: [Se estou muito em sintonia com os sons do ambiente]"]
     colunas_cinestesico = ["Eu tomo decisões importantes baseados em: [intuição]", "Durante uma discussão eu sou mais influenciado por: [se eu entro em contato ou não com os sentimentos reais do outro]", "Eu comunico mais facilmente o que se passa comigo: [pelos sentimentos que compartilho]", "É muito fácil para mim: [escolher os móveis mais confortáveis]", "Eu me percebo assim: [eu sou muito sensível à maneira como a roupa veste o meu corpo]"]
     colunas_digital = ["Eu tomo decisões importantes baseados em: [um estudo preciso e minucioso do assunto]", "Durante uma discussão eu sou mais influenciado por: [a lógica do argumento da outra pessoa]", "Eu comunico mais facilmente o que se passa comigo: [pelas palavras que escolho]", "É muito fácil para mim: [selecionar o ponto mais relevante relativo a um assunto interessante]", "Eu me percebo assim: [se sou muito capaz de raciocinar com fatos e dados novos]"]
@@ -260,30 +260,33 @@ if tela == "👤 Perfil do Candidato":
     
     with col_btn:
         st.write("")
+        # Ajuste no JS: usando window.top.print() para forçar a ação no mobile e adicionando um ligeiro atraso (setTimeout)
         script_pdf = f"""
         <script>
             function imprimirRelatorio() {{
                 try {{
-                    var doc = window.parent.document;
+                    var doc = window.top.document;
                     var tituloAntigo = doc.title;
-                    doc.title = "MapeiaAI - Implantta Consultoria - {candidato_sel}";
-                    window.parent.print();
-                    setTimeout(function() {{ doc.title = tituloAntigo; }}, 2000);
+                    doc.title = "MapeiaAI - {candidato_sel}";
+                    setTimeout(function() {{
+                        window.top.print();
+                        setTimeout(function() {{ doc.title = tituloAntigo; }}, 2000);
+                    }}, 300);
                 }} catch(e) {{
                     window.print();
                 }}
             }}
         </script>
         <button onclick="imprimirRelatorio()" style="
-            background-color: #DDA15E; color: white; border: none; padding: 10px 15px; 
+            background-color: #DDA15E; color: white; border: none; padding: 15px 15px; 
             border-radius: 5px; cursor: pointer; font-family: sans-serif; font-weight: bold;
             font-size: 14px; width: 100%; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.3s;
-            margin-top: 10px;
+            margin-top: 10px; -webkit-tap-highlight-color: transparent;
         " onmouseover="this.style.backgroundColor='#c98d4b'" onmouseout="this.style.backgroundColor='#DDA15E'">
             📥 Salvar PDF do Candidato
         </button>
         """
-        components.html(script_pdf, height=75)
+        components.html(script_pdf, height=85)
         
     st.markdown('<hr class="no-print" style="margin: 0.5em 0;">', unsafe_allow_html=True)
     
@@ -402,7 +405,7 @@ if tela == "👤 Perfil do Candidato":
                     if top2_valor > 15:
                         st.write(f"• **Riscos de {top2_nome}:** {detalhes_perfis[top2_nome]['fracos']}")
 
-        # 🎯 BLOCO 3: CONCLUSÃO (BLINDADO)
+        # 🎯 BLOCO 3: CONCLUSÃO
         with st.container():
             st.markdown("#### 🎯 Alinhamento com a Função & Conclusão")
             
@@ -473,7 +476,6 @@ if tela == "👤 Perfil do Candidato":
             * **Se for Digital:** Vá direto ao ponto apresentando fatos, planilhas e lógicas claras. Evite apelo puramente emocional.
             """)
             
-            # 🚨 MUDANÇA AQUI: A linha extra não será impressa, e as respostas brutas ocultadas no PDF
             st.markdown('<hr class="no-print">', unsafe_allow_html=True)
             with st.expander("🔍 Ver Respostas Brutas do Teste Comportamental (Texto)", expanded=False):
                 perguntas_texto = list(gabarito_comportamental.keys())
