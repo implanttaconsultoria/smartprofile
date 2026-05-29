@@ -21,11 +21,11 @@ st.set_page_config(
 )
 
 # =====================================================================
-# 🎨 ESTILOS VISUAIS CUSTOMIZADOS E MOTOR DE COMPACTAÇÃO DE PDF
+# 🎨 ESTILOS VISUAIS E MOTOR BLINDADO DE PDF PARA CELULAR E PC
 # =====================================================================
 st.markdown("""
     <style>
-    /* Ajuste da Caixa de Seleção: Fundo Azul e Fonte Branca */
+    /* Ajuste da Caixa de Seleção */
     div[data-baseweb="select"] > div {
         background-color: #2B5C8F !important;
         color: white !important;
@@ -35,7 +35,7 @@ st.markdown("""
         color: white !important;
     }
     
-    /* Menu Lateral Branco para Contraste */
+    /* Menu Lateral Branco */
     section[data-testid="stSidebar"] * {
         color: white !important;
     }
@@ -43,14 +43,20 @@ st.markdown("""
         color: white !important;
     }
     
-    /* Configurações Estritas para a Geração do PDF Perfeito (PC e Mobile) */
+    /* CONFIGURAÇÕES ESTRITAS PARA IMPRESSÃO (O SEGREDO PARA NÃO CORROMPER NO CELULAR) */
     @media print {
         @page {
             size: A4 portrait;
             margin: 1cm; 
         }
         
-        /* 🚨 MAGIA AQUI: Oculta botões, menus, caixas fechadas e elementos marcados como no-print! */
+        /* Libera a altura total da página para o celular não cortar/corromper o arquivo */
+        html, body, .stApp {
+            height: auto !important;
+            overflow: visible !important;
+        }
+        
+        /* Oculta interface e botões */
         section[data-testid="stSidebar"], 
         header[data-testid="stHeader"], 
         div[data-testid="stSelectbox"],
@@ -61,7 +67,7 @@ st.markdown("""
             height: 0 !important;
         }
 
-        /* Remove margens extras para aproveitar a página inteira */
+        /* Remove margens extras */
         .block-container {
             padding: 0 !important;
             margin: 0 !important;
@@ -69,38 +75,24 @@ st.markdown("""
             width: 100% !important;
         }
 
-        /* Compacta as Caixas de Informação do Candidato */
-        div[data-testid="stAlert"] {
-            padding: 10px !important;
-            margin-bottom: 5px !important;
-        }
-        
-        /* Ajusta o tamanho dos títulos no papel para não roubar espaço */
+        /* Compacta caixas e títulos */
+        div[data-testid="stAlert"] { padding: 10px !important; margin-bottom: 5px !important; }
         h1 { font-size: 26px !important; margin-top: 0 !important; padding-top: 0 !important; margin-bottom: 5px !important; }
         h3 { font-size: 18px !important; margin-top: 5px !important; margin-bottom: 5px !important;}
         h4 { font-size: 16px !important; margin-top: 5px !important; margin-bottom: 5px !important;}
         p { margin-bottom: 5px !important; }
 
-        /* IMPEDE CORTES: Garante que os gráficos fiquem 100% visíveis */
+        /* Garante que os gráficos carreguem perfeitamente */
         .stPlotlyChart, .stPlotlyChart > div, .js-plotly-plot, .plot-container {
             overflow: visible !important;
             page-break-inside: avoid !important;
         }
 
-        /* BLINDAGEM DE QUEBRA DE PÁGINA */
-        [data-testid="stHorizontalBlock"] { 
-            page-break-inside: avoid !important; 
-            align-items: flex-start !important;
-        }
-        [data-testid="stVerticalBlock"], [data-testid="stExpander"] {
-            page-break-inside: avoid !important;
-            margin-bottom: 5px !important;
-        }
-        h1, h2, h3, h4, h5, h6 {
-            page-break-after: avoid !important;
-        }
+        /* Protege quebra de página */
+        [data-testid="stHorizontalBlock"] { page-break-inside: avoid !important; align-items: flex-start !important; }
+        [data-testid="stVerticalBlock"], [data-testid="stExpander"] { page-break-inside: avoid !important; margin-bottom: 5px !important; }
+        h1, h2, h3, h4, h5, h6 { page-break-after: avoid !important; }
         
-        /* Força a impressão das cores corporativas */
         * {
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
@@ -120,19 +112,8 @@ st.sidebar.title("Painel de Controle")
 tela = st.sidebar.radio("Navegar para:", ["📊 Dashboard Geral", "👤 Perfil do Candidato"])
 
 # 🔥 PALETA DE CORES
-cores_animais = {
-    "Tubarão": "#2B5C8F",   
-    "Lobo": "#5A6B7C",      
-    "Águia": "#DDA15E",     
-    "Gato": "#8EBCB5"       
-}
-
-cores_canais = {
-    "Visual": "#1F4E5B", 
-    "Auditivo": "#2D728F", 
-    "Cinestésico": "#3B8EA5", 
-    "Digital (Lógico)": "#4D9A8E"
-}
+cores_animais = {"Tubarão": "#2B5C8F", "Lobo": "#5A6B7C", "Águia": "#DDA15E", "Gato": "#8EBCB5"}
+cores_canais = {"Visual": "#1F4E5B", "Auditivo": "#2D728F", "Cinestésico": "#3B8EA5", "Digital (Lógico)": "#4D9A8E"}
 
 # =====================================================================
 # 🔌 CONEXÃO E AUTO-LIMPEZA DA PLANILHA
@@ -253,25 +234,23 @@ else:
 # =====================================================================
 if tela == "👤 Perfil do Candidato":
     
-    # 🌟 1. CONTROLES NO TOPO ABSOLUTO (Ficam ocultos ao gerar o PDF)
+    # 🌟 CONTROLES NO TOPO ABSOLUTO (Sem temporizador para resetar o título)
     col_sel, col_btn = st.columns([3, 1.5])
     with col_sel:
-        candidato_sel = st.selectbox("Selecione o Candidato para analisar os resultados:", lista_candidatos)
+        candidato_sel = st.selectbox("Selecione o Candidato:", lista_candidatos)
     
     with col_btn:
         st.write("")
-        # Ajuste no JS: usando window.top.print() para forçar a ação no mobile e adicionando um ligeiro atraso (setTimeout)
         script_pdf = f"""
         <script>
             function imprimirRelatorio() {{
                 try {{
-                    var doc = window.top.document;
-                    var tituloAntigo = doc.title;
+                    var doc = window.parent.document;
+                    // Altera o título definitivamente para garantir que o celular salva com este nome
                     doc.title = "MapeiaAI - {candidato_sel}";
                     setTimeout(function() {{
-                        window.top.print();
-                        setTimeout(function() {{ doc.title = tituloAntigo; }}, 2000);
-                    }}, 300);
+                        window.parent.print();
+                    }}, 500);
                 }} catch(e) {{
                     window.print();
                 }}
@@ -295,13 +274,12 @@ if tela == "👤 Perfil do Candidato":
         
         vaga_alvo = linha_cand.get("Setor", "Não Informado")
         empresa_alvo = linha_cand.get("Empresa", "Não Informada")
-        email_cand = linha_cand.get("Endereço de e-mail", "Não Informado")
         data_teste = linha_cand.get("Carimbo de data/hora", linha_cand.get("Data:", "Não Informada"))
         
         valores_canais = calcular_sistema_representacional(linha_cand)
         valores_animais = calcular_perfil_animais(linha_cand)
         
-        # 🌟 2. CABEÇALHO OFICIAL DO RELATÓRIO
+        # 🌟 CABEÇALHO OFICIAL DO RELATÓRIO
         with st.container():
             col_titulo, col_logo = st.columns([3.5, 1.5])
             with col_titulo:
@@ -342,37 +320,19 @@ if tela == "👤 Perfil do Candidato":
                 hole=0.4
             )
             fig_animais.update_traces(textposition='inside', textinfo='percent+label')
-            
-            fig_animais.update_layout(
-                height=240, 
-                showlegend=False, 
-                margin=dict(t=0, b=0, l=0, r=0)
-            )
+            fig_animais.update_layout(height=240, showlegend=False, margin=dict(t=0, b=0, l=0, r=0))
             st.plotly_chart(fig_animais, use_container_width=True)
             
             st.markdown("#### 📊 Parecer Analítico")
             st.markdown(f"**Distribuição de Perfis:** Predominância Primária de **{top1_nome}** ({top1_valor}%) com suporte Secundário de **{top2_nome}** ({top2_valor}%).")
-            st.info("💡 Logo abaixo, detalhamos os Pontos Fortes e os Pontos de Atenção baseados nesta distribuição comportamental.")
 
         # 🟢 BLOCO 2: CAIXAS DE PONTOS FORTES E FRACOS
         with st.container():
             detalhes_perfis = {
-                "Tubarão": {
-                    "fortes": "Foco em resultados, iniciativa, senso de urgência, coragem para decidir e alta resiliência sob pressão.",
-                    "fracos": "Dificuldade em delegar, tendência ao autoritarismo, baixa paciência com processos lentos e inclinação a atropelar o planejamento."
-                },
-                "Lobo": {
-                    "fortes": "Organização cirúrgica, atenção extrema a detalhes, disciplina, lealdade a regras e alta previsibilidade na entrega.",
-                    "fracos": "Resistência acentuada a mudanças repentinas, perfeccionismo que pode gerar lentidão e dificuldade de agir no improviso."
-                },
-                "Águia": {
-                    "fortes": "Pensamento disruptivo, criatividade, facilidade de adaptação, olhar de longo prazo e entusiasmo para propor inovações.",
-                    "fracos": "Falta de linearidade na execução, propensão a perder o foco antes de concluir tarefas repetitivas e indisciplina com prazos rígidos."
-                },
-                "Gato": {
-                    "fortes": "Excelente comunicação interpessoal, mediação de conflitos, facilidade para trabalhar em equipe, empatia e construção de harmonia.",
-                    "fracos": "Dificuldade para dar feedbacks duros, tendência a evitar confrontos necessários e vulnerabilidade a ambientes altamente agressivos."
-                }
+                "Tubarão": {"fortes": "Foco em resultados, iniciativa, senso de urgência, coragem para decidir.", "fracos": "Dificuldade em delegar, tendência ao autoritarismo, inclinação a atropelar o planejamento."},
+                "Lobo": {"fortes": "Organização cirúrgica, atenção extrema a detalhes, disciplina, lealdade a regras.", "fracos": "Resistência acentuada a mudanças repentinas, perfeccionismo, dificuldade de agir no improviso."},
+                "Águia": {"fortes": "Pensamento disruptivo, criatividade, facilidade de adaptação, olhar de longo prazo.", "fracos": "Falta de linearidade na execução, propensão a perder o foco e indisciplina com prazos."},
+                "Gato": {"fortes": "Excelente comunicação interpessoal, mediação de conflitos, facilidade para trabalhar em equipe.", "fracos": "Dificuldade para dar feedbacks duros, tendência a evitar confrontos necessários."}
             }
             
             vaga_lower = str(vaga_alvo).lower()
@@ -395,15 +355,14 @@ if tela == "👤 Perfil do Candidato":
             col_fortes, col_fracos = st.columns(2)
             with col_fortes:
                 with st.expander("⭐ Pontos Fortes do Candidato", expanded=True):
-                    st.write(f"• **Fator {top1_nome}:** {detalhes_perfis[top1_nome]['fortes']}")
+                    st.write(f"• **{top1_nome}:** {detalhes_perfis[top1_nome]['fortes']}")
                     if top2_valor > 15:
-                        st.write(f"• **Fator {top2_nome}:** {detalhes_perfis[top2_nome]['fortes']}")
-                        
+                        st.write(f"• **{top2_nome}:** {detalhes_perfis[top2_nome]['fortes']}")
             with col_fracos:
                 with st.expander("⚠️ Pontos de Atenção (Fraquezas)", expanded=True):
-                    st.write(f"• **Riscos de {top1_nome}:** {detalhes_perfis[top1_nome]['fracos']}")
+                    st.write(f"• **{top1_nome}:** {detalhes_perfis[top1_nome]['fracos']}")
                     if top2_valor > 15:
-                        st.write(f"• **Riscos de {top2_nome}:** {detalhes_perfis[top2_nome]['fracos']}")
+                        st.write(f"• **{top2_nome}:** {detalhes_perfis[top2_nome]['fracos']}")
 
         # 🎯 BLOCO 3: CONCLUSÃO
         with st.container():
@@ -419,23 +378,18 @@ if tela == "👤 Perfil do Candidato":
             
             col_concl1, col_concl2 = st.columns([1.5, 1])
             with col_concl1:
-                st.markdown(f"""
-                **Engenharia de Cargo:** A vaga indicada (**{vaga_alvo}**) possui características do tipo *{tipo_vaga}*. Para este cenário, os perfis recomendados são **{', '.join(perfis_ideais)}**.
-                
-                O candidato combina essa estrutura comportamental com um canal representacional predominantemente **{predominante_pnl}**, o que significa que ele {pnl_detalhes[predominante_pnl]}
-                """)
+                st.markdown(f"**Engenharia de Cargo:** A vaga indicada (**{vaga_alvo}**) possui características do tipo *{tipo_vaga}*. Para este cenário, os perfis recomendados são **{', '.join(perfis_ideais)}**.\n\nO candidato combina essa estrutura com um canal predominantemente **{predominante_pnl}**, o que significa que ele {pnl_detalhes[predominante_pnl]}")
                 
             with col_concl2:
                 if convergente:
                     st.success("✅ RECOMENDAÇÃO: **CONTRATAR**")
-                    st.caption("🏆 **Justificativa:** Alta aderência comportamental com o escopo da vaga e o estilo de raciocínio técnico exigido.")
+                    st.caption("🏆 **Justificativa:** Alta aderência comportamental com o escopo da vaga.")
+                elif top2_nome in perfis_ideais:
+                    st.warning("🟡 RECOMENDAÇÃO: **AVALIAR COM RESSALVAS**")
+                    st.caption("👀 **Justificativa:** O perfil principal difere do esperado, mas o secundário equilibra.")
                 else:
-                    if top2_nome in perfis_ideais:
-                        st.warning("🟡 RECOMENDAÇÃO: **AVALIAR COM RESSALVAS**")
-                        st.caption("👀 **Justificativa:** O perfil principal difere do esperado, mas o secundário equilibra. Focar entrevista nos pontos fracos.")
-                    else:
-                        st.error("❌ RECOMENDAÇÃO: **DESALINHADO À VAGA**")
-                        st.caption("🚨 **Justificativa:** Desalinhamento natural entre a energia comportamental do candidato e as rotinas diárias da função.")
+                    st.error("❌ RECOMENDAÇÃO: **DESALINHADO À VAGA**")
+                    st.caption("🚨 **Justificativa:** Desalinhamento natural com as rotinas diárias da função.")
                         
             st.markdown("---")
         
@@ -443,26 +397,9 @@ if tela == "👤 Perfil do Candidato":
         with st.container():
             st.subheader("📊 Sistema Representacional (PNL)")
             
-            df_chart = pd.DataFrame({
-                "Canal": list(valores_canais.keys()), 
-                "Percentagem (%)": list(valores_canais.values())
-            })
-            
-            fig = px.bar(
-                df_chart, 
-                x="Canal", 
-                y="Percentagem (%)", 
-                color="Canal",
-                text="Percentagem (%)", 
-                template="streamlit",
-                color_discrete_map=cores_canais
-            )
-            
-            fig.update_layout(
-                height=260, 
-                showlegend=False, 
-                margin=dict(t=10, b=10, l=0, r=0)
-            )
+            df_chart = pd.DataFrame({"Canal": list(valores_canais.keys()), "Percentagem (%)": list(valores_canais.values())})
+            fig = px.bar(df_chart, x="Canal", y="Percentagem (%)", color="Canal", text="Percentagem (%)", template="streamlit", color_discrete_map=cores_canais)
+            fig.update_layout(height=260, showlegend=False, margin=dict(t=10, b=10, l=0, r=0))
             st.plotly_chart(fig, use_container_width=True)
             
             st.subheader("🧠 Manual de Relacionamento (Liderança)")
@@ -501,11 +438,7 @@ elif tela == "📊 Dashboard Geral":
     if df_dados is not None and "Nome" in df_dados.columns:
         st.markdown("### 📋 Fluxo de Respostas Mais Recentes")
         
-        colunas_exibicao = []
-        for col in ["Carimbo de data/hora", "Nome", "Empresa", "Setor"]:
-            if col in df_dados.columns:
-                colunas_exibicao.append(col)
-                
+        colunas_exibicao = [col for col in ["Carimbo de data/hora", "Nome", "Empresa", "Setor"] if col in df_dados.columns]
         if colunas_exibicao:
             st.dataframe(df_dados[colunas_exibicao])
         else:
