@@ -21,7 +21,7 @@ st.set_page_config(
 )
 
 # =====================================================================
-# 🎨 ESTILOS VISUAIS E MOTOR BLINDADO DE PDF PARA CELULAR E PC
+# 🎨 ESTILOS VISUAIS E MOTOR BLINDADO DE PDF (O VERDADEIRO FIX MOBILE)
 # =====================================================================
 st.markdown("""
     <style>
@@ -43,28 +43,14 @@ st.markdown("""
         color: white !important;
     }
     
-    /* 🚨 CONFIGURAÇÕES ESTRITAS PARA IMPRESSÃO (O ANTÍDOTO DO CELULAR) */
+    /* 🚨 CONFIGURAÇÕES ESTRITAS PARA IMPRESSÃO */
     @media print {
         @page {
             size: A4 portrait;
             margin: 1cm; 
         }
         
-        /* Desliga o Flexbox: Impede o motor do celular de crashar e corromper o PDF */
-        html, body, .stApp, main, .block-container, 
-        [data-testid="stVerticalBlock"], 
-        [data-testid="stHorizontalBlock"],
-        [data-testid="column"] {
-            display: block !important;
-            height: auto !important;
-            width: 100% !important;
-            position: static !important;
-            overflow: visible !important;
-            box-shadow: none !important;
-            float: none !important;
-        }
-        
-        /* Oculta interface do sistema. NOTA: Deixamos de ocultar o iframe aqui! */
+        /* Oculta interface do sistema nativo */
         section[data-testid="stSidebar"], 
         header[data-testid="stHeader"], 
         div[data-testid="stSelectbox"],
@@ -73,7 +59,25 @@ st.markdown("""
             display: none !important; 
         }
 
-        /* Compacta caixas e títulos para caber bem na folha */
+        /* 🚨 A GRANDE CORREÇÃO MOBILE: Não apagamos o iframe, apenas o escondemos visualmente! 
+           Isto impede o celular de crashar e corromper o PDF. */
+        iframe {
+            visibility: hidden !important;
+            height: 0 !important;
+            width: 0 !important;
+            position: absolute !important;
+            border: none !important;
+        }
+
+        /* Remove margens extras e restaura as colunas perfeitas */
+        .block-container {
+            padding: 0 !important;
+            margin: 0 !important;
+            max-width: 100% !important;
+            width: 100% !important;
+        }
+
+        /* Compacta caixas e títulos */
         div[data-testid="stAlert"] { padding: 10px !important; margin-bottom: 5px !important; }
         h1 { font-size: 26px !important; margin-top: 0 !important; padding-top: 0 !important; margin-bottom: 5px !important; }
         h3 { font-size: 18px !important; margin-top: 5px !important; margin-bottom: 5px !important;}
@@ -86,8 +90,9 @@ st.markdown("""
             page-break-inside: avoid !important;
         }
 
-        /* Protege quebra de página */
-        [data-testid="stExpander"] { page-break-inside: avoid !important; margin-bottom: 5px !important; }
+        /* Protege quebra de página mantendo a estrutura lateral (flexbox) */
+        [data-testid="stHorizontalBlock"] { page-break-inside: avoid !important; align-items: flex-start !important; }
+        [data-testid="stVerticalBlock"], [data-testid="stExpander"] { page-break-inside: avoid !important; margin-bottom: 5px !important; }
         h1, h2, h3, h4, h5, h6 { page-break-after: avoid !important; }
         
         * {
@@ -238,24 +243,16 @@ if tela == "👤 Perfil do Candidato":
     
     with col_btn:
         st.write("")
-        # 🚨 MAGIA DO CELULAR: Botão volta à caixa segura, mas esconde-se por dentro!
+        # Botão limpo restaurado. Agora ele clica e não corrompe porque o iframe não recebe "display: none" no CSS!
         script_pdf = f"""
-        <style>
-            /* Esconde apenas o botão dentro desta caixa na hora de imprimir */
-            @media print {{
-                button {{ display: none !important; }}
-            }}
-        </style>
         <script>
             function imprimirRelatorio() {{
-                // Coloca o nome do candidato no arquivo
                 window.parent.document.title = "MapeiaAI - {candidato_sel}";
-                // Manda imprimir
                 window.parent.print();
             }}
         </script>
         <button onclick="imprimirRelatorio()" style="
-            background-color: #DDA15E; color: white; border: none; padding: 12px 15px; 
+            background-color: #DDA15E; color: white; border: none; padding: 15px 15px; 
             border-radius: 5px; cursor: pointer; font-family: sans-serif; font-weight: bold;
             font-size: 14px; width: 100%; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.3s;
             margin-top: 10px; -webkit-tap-highlight-color: transparent;
@@ -263,7 +260,7 @@ if tela == "👤 Perfil do Candidato":
             📥 Salvar PDF do Candidato
         </button>
         """
-        components.html(script_pdf, height=75)
+        components.html(script_pdf, height=80)
         
     st.markdown('<hr class="no-print" style="margin: 0.5em 0;">', unsafe_allow_html=True)
     
@@ -333,7 +330,6 @@ if tela == "👤 Perfil do Candidato":
                 "Gato": {"fortes": "Excelente comunicação interpessoal, mediação de conflitos, facilidade para trabalhar em equipe.", "fracos": "Dificuldade para dar feedbacks duros, tendência a evitar confrontos necessários."}
             }
             
-            # LÓGICA DE CRUZAMENTO DE VAGA CORRIGIDA
             vaga_lower = str(vaga_alvo).lower()
             
             if any(k in vaga_lower for k in ["contab", "financ", "fiscal", "lobo", "adm", "process", "ti", "suport", "auditor", "qualidad", "estoque", "logistica"]):
@@ -367,7 +363,7 @@ if tela == "👤 Perfil do Candidato":
                     if top2_valor > 15:
                         st.write(f"• **{top2_nome}:** {detalhes_perfis[top2_nome]['fracos']}")
 
-        # 🎯 BLOCO 3: CONCLUSÃO (COM A CORREÇÃO DE VAGA GERAL)
+        # 🎯 BLOCO 3: CONCLUSÃO 
         with st.container():
             st.markdown("#### 🎯 Alinhamento com a Função & Conclusão")
             
