@@ -21,23 +21,36 @@ st.set_page_config(
 )
 
 # =====================================================================
-# 🎨 ESTILOS VISUAIS E MOTOR DE PDF (LAYOUT PERFEITO RESTAURADO)
+# 🎨 ESTILOS VISUAIS E MOTOR DE COMPACTAÇÃO DE PDF (PERFEITO PARA PC)
 # =====================================================================
 st.markdown("""
     <style>
-    /* Ajuste da Caixa de Seleção */
-    div[data-baseweb="select"] > div { background-color: #2B5C8F !important; color: white !important; border-radius: 5px; }
-    div[data-baseweb="select"] > div * { color: white !important; }
+    /* Ajuste da Caixa de Seleção: Fundo Azul e Fonte Branca */
+    div[data-baseweb="select"] > div {
+        background-color: #2B5C8F !important;
+        color: white !important;
+        border-radius: 5px;
+    }
+    div[data-baseweb="select"] > div * {
+        color: white !important;
+    }
     
-    /* Menu Lateral Branco */
-    section[data-testid="stSidebar"] * { color: white !important; }
-    div[role="radiogroup"] label { color: white !important; }
+    /* Menu Lateral Branco para Contraste */
+    section[data-testid="stSidebar"] * {
+        color: white !important;
+    }
+    div[role="radiogroup"] label {
+        color: white !important;
+    }
     
-    /* 🚨 O SEGREDO DA IMPRESSÃO PERFEITA */
+    /* Configurações Estritas para a Geração do PDF Perfeito no PC */
     @media print {
-        @page { size: A4 portrait; margin: 1cm; }
+        @page {
+            size: A4 portrait;
+            margin: 1cm; /* Margem reduzida para dar mais espaço ao conteúdo */
+        }
         
-        /* Oculta toda a interface do sistema (Menus, Selectbox, iframes do botão) */
+        /* Oculta botões, menus, caixas fechadas e o botão de imprimir */
         section[data-testid="stSidebar"], 
         header[data-testid="stHeader"], 
         div[data-testid="stSelectbox"],
@@ -48,23 +61,50 @@ st.markdown("""
             height: 0 !important;
         }
 
-        /* Remove margens para aproveitar o espaço da folha A4 */
-        .block-container { padding: 0 !important; margin: 0 !important; max-width: 100% !important; width: 100% !important; }
+        /* Remove margens extras para aproveitar a página inteira */
+        .block-container {
+            padding: 0 !important;
+            margin: 0 !important;
+            max-width: 100% !important;
+            width: 100% !important;
+        }
 
-        /* Compacta caixas e títulos */
-        div[data-testid="stAlert"] { padding: 10px !important; margin-bottom: 5px !important; }
+        /* Compacta as Caixas de Informação do Candidato */
+        div[data-testid="stAlert"] {
+            padding: 10px !important;
+            margin-bottom: 5px !important;
+        }
+        
+        /* Ajusta o tamanho dos títulos no papel para não roubar espaço */
         h1 { font-size: 26px !important; margin-top: 0 !important; padding-top: 0 !important; margin-bottom: 5px !important; }
         h3 { font-size: 18px !important; margin-top: 5px !important; margin-bottom: 5px !important;}
         h4 { font-size: 16px !important; margin-top: 5px !important; margin-bottom: 5px !important;}
         p { margin-bottom: 5px !important; }
 
-        /* Proteção total anti-corte nos gráficos e blocos */
-        .stPlotlyChart, .stPlotlyChart > div, .js-plotly-plot, .plot-container { overflow: visible !important; page-break-inside: avoid !important; }
-        [data-testid="stHorizontalBlock"] { page-break-inside: avoid !important; align-items: flex-start !important; }
-        [data-testid="stVerticalBlock"], [data-testid="stExpander"] { page-break-inside: avoid !important; margin-bottom: 5px !important; }
-        h1, h2, h3, h4, h5, h6 { page-break-after: avoid !important; }
+        /* IMPEDE CORTES: Garante que os gráficos fiquem 100% visíveis */
+        .stPlotlyChart, .stPlotlyChart > div, .js-plotly-plot, .plot-container {
+            overflow: visible !important;
+            page-break-inside: avoid !important;
+        }
+
+        /* BLINDAGEM DE QUEBRA DE PÁGINA COM AS COLUNAS PERFEITAS */
+        [data-testid="stHorizontalBlock"] { 
+            page-break-inside: avoid !important; 
+            align-items: flex-start !important;
+        }
+        [data-testid="stVerticalBlock"], [data-testid="stExpander"] {
+            page-break-inside: avoid !important;
+            margin-bottom: 5px !important;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            page-break-after: avoid !important;
+        }
         
-        * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        /* Força a impressão das cores corporativas */
+        * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
     }
     </style>
 """, unsafe_allow_html=True)
@@ -100,6 +140,7 @@ def carregar_dados_planilha():
                     df.columns = row.values 
                     df = df.iloc[i+1:].reset_index(drop=True) 
                     break
+                    
         df = df.loc[:, df.columns.notna()]
         
         coluna_nome = None
@@ -111,6 +152,7 @@ def carregar_dados_planilha():
         if coluna_nome:
             df = df.dropna(subset=[coluna_nome])
             df = df.rename(columns={coluna_nome: "Nome"})
+            
         return df
     except Exception as e:
         st.error(f"Erro de conexão: {e}")
@@ -199,34 +241,37 @@ else:
 # =====================================================================
 if tela == "👤 Perfil do Candidato":
     
-    # 🌟 CONTROLES NO TOPO
+    # 🌟 CONTROLES NO TOPO (Botão com a lógica perfeita para o PC)
     col_sel, col_btn = st.columns([3, 1.5])
     with col_sel:
         candidato_sel = st.selectbox("Selecione o Candidato:", lista_candidatos)
     
     with col_btn:
         st.write("")
-        # Botão que funciona maravilhosamente no PC
         script_pdf = f"""
         <script>
             function imprimirRelatorio() {{
-                window.parent.document.title = "MapeiaAI - {candidato_sel}";
-                window.parent.print();
+                try {{
+                    var doc = window.parent.document;
+                    var tituloAntigo = doc.title;
+                    doc.title = "MapeiaAI - Implantta Consultoria - {candidato_sel}";
+                    window.parent.print();
+                    setTimeout(function() {{ doc.title = tituloAntigo; }}, 2000);
+                }} catch(e) {{
+                    window.print();
+                }}
             }}
         </script>
         <button onclick="imprimirRelatorio()" style="
-            background-color: #DDA15E; color: white; border: none; padding: 12px 15px; 
+            background-color: #DDA15E; color: white; border: none; padding: 10px 15px; 
             border-radius: 5px; cursor: pointer; font-family: sans-serif; font-weight: bold;
             font-size: 14px; width: 100%; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.3s;
             margin-top: 10px;
         " onmouseover="this.style.backgroundColor='#c98d4b'" onmouseout="this.style.backgroundColor='#DDA15E'">
-            💻 Imprimir / Salvar PDF
+            📥 Salvar PDF do Candidato
         </button>
-        <div style="text-align: center; color: #5A6B7C; font-family: sans-serif; font-size: 12px; margin-top: 8px;">
-            📱 <b>No telemóvel:</b> Use o menu <b>Partilhar > Imprimir</b> do seu navegador para evitar erros.
-        </div>
         """
-        components.html(script_pdf, height=100)
+        components.html(script_pdf, height=75)
         
     st.markdown('<hr class="no-print" style="margin: 0.5em 0;">', unsafe_allow_html=True)
     
@@ -240,7 +285,7 @@ if tela == "👤 Perfil do Candidato":
         valores_canais = calcular_sistema_representacional(linha_cand)
         valores_animais = calcular_perfil_animais(linha_cand)
         
-        # 🌟 CABEÇALHO DO RELATÓRIO
+        # 🌟 CABEÇALHO OFICIAL DO RELATÓRIO
         with st.container():
             col_titulo, col_logo = st.columns([3.5, 1.5])
             with col_titulo:
@@ -296,6 +341,7 @@ if tela == "👤 Perfil do Candidato":
                 "Gato": {"fortes": "Excelente comunicação interpessoal, mediação de conflitos, facilidade para trabalhar em equipe.", "fracos": "Dificuldade para dar feedbacks duros, tendência a evitar confrontos necessários."}
             }
             
+            # Lógica inteligente das vagas mantida!
             vaga_lower = str(vaga_alvo).lower()
             
             if any(k in vaga_lower for k in ["contab", "financ", "fiscal", "lobo", "adm", "process", "ti", "suport", "auditor", "qualidad", "estoque", "logistica"]):
@@ -329,7 +375,7 @@ if tela == "👤 Perfil do Candidato":
                     if top2_valor > 15:
                         st.write(f"• **{top2_nome}:** {detalhes_perfis[top2_nome]['fracos']}")
 
-        # 🎯 BLOCO 3: CONCLUSÃO (E INTELIGÊNCIA DA VAGA GERAL)
+        # 🎯 BLOCO 3: CONCLUSÃO
         with st.container():
             st.markdown("#### 🎯 Alinhamento com a Função & Conclusão")
             
