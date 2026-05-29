@@ -43,20 +43,25 @@ st.markdown("""
         color: white !important;
     }
     
-    /* CONFIGURAÇÕES ESTRITAS PARA IMPRESSÃO (O SEGREDO PARA NÃO CORROMPER NO CELULAR) */
+    /* CONFIGURAÇÕES ESTRITAS PARA IMPRESSÃO (ESTÁVEL PARA MOBILE) */
     @media print {
         @page {
             size: A4 portrait;
             margin: 1cm; 
         }
         
-        /* Libera a altura total da página para o celular não cortar/corromper o arquivo */
-        html, body, .stApp {
+        /* Libera as amarras do layout para o telemóvel não cortar nem corromper */
+        html, body, .stApp, main, .block-container {
             height: auto !important;
+            position: relative !important;
             overflow: visible !important;
+            max-width: 100% !important;
+            width: 100% !important;
+            padding: 0 !important;
+            margin: 0 !important;
         }
         
-        /* Oculta interface e botões */
+        /* Oculta interface e botões do sistema */
         section[data-testid="stSidebar"], 
         header[data-testid="stHeader"], 
         div[data-testid="stSelectbox"],
@@ -65,14 +70,6 @@ st.markdown("""
         details:not([open]) { 
             display: none !important; 
             height: 0 !important;
-        }
-
-        /* Remove margens extras */
-        .block-container {
-            padding: 0 !important;
-            margin: 0 !important;
-            max-width: 100% !important;
-            width: 100% !important;
         }
 
         /* Compacta caixas e títulos */
@@ -234,27 +231,24 @@ else:
 # =====================================================================
 if tela == "👤 Perfil do Candidato":
     
-    # 🌟 CONTROLES NO TOPO ABSOLUTO (Sem temporizador para resetar o título)
+    # 🌟 1. CONTROLES NO TOPO ABSOLUTO
     col_sel, col_btn = st.columns([3, 1.5])
     with col_sel:
         candidato_sel = st.selectbox("Selecione o Candidato:", lista_candidatos)
     
     with col_btn:
         st.write("")
-        script_pdf = f"""
+        # CÓDIGO JS SIMPLIFICADO: Foca na janela e imprime direto para evitar falhas no Mobile
+        script_pdf = """
         <script>
-            function imprimirRelatorio() {{
-                try {{
-                    var doc = window.parent.document;
-                    // Altera o título definitivamente para garantir que o celular salva com este nome
-                    doc.title = "MapeiaAI - {candidato_sel}";
-                    setTimeout(function() {{
-                        window.parent.print();
-                    }}, 500);
-                }} catch(e) {{
+            function imprimirRelatorio() {
+                try {
+                    window.parent.focus();
+                    window.parent.print();
+                } catch(e) {
                     window.print();
-                }}
-            }}
+                }
+            }
         </script>
         <button onclick="imprimirRelatorio()" style="
             background-color: #DDA15E; color: white; border: none; padding: 15px 15px; 
@@ -262,7 +256,7 @@ if tela == "👤 Perfil do Candidato":
             font-size: 14px; width: 100%; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.3s;
             margin-top: 10px; -webkit-tap-highlight-color: transparent;
         " onmouseover="this.style.backgroundColor='#c98d4b'" onmouseout="this.style.backgroundColor='#DDA15E'">
-            📥 Salvar PDF do Candidato
+            📥 Salvar PDF
         </button>
         """
         components.html(script_pdf, height=85)
@@ -279,7 +273,7 @@ if tela == "👤 Perfil do Candidato":
         valores_canais = calcular_sistema_representacional(linha_cand)
         valores_animais = calcular_perfil_animais(linha_cand)
         
-        # 🌟 CABEÇALHO OFICIAL DO RELATÓRIO
+        # 🌟 2. CABEÇALHO OFICIAL DO RELATÓRIO
         with st.container():
             col_titulo, col_logo = st.columns([3.5, 1.5])
             with col_titulo:
