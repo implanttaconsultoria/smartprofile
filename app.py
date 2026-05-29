@@ -4,7 +4,6 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 from streamlit_gsheets import GSheetsConnection
-import streamlit.components.v1 as components
 
 # =====================================================================
 # 🪄 TRUQUE DE COMPATIBILIDADE (RENDER)
@@ -21,7 +20,7 @@ st.set_page_config(
 )
 
 # =====================================================================
-# 🎨 ESTILOS VISUAIS E MOTOR BLINDADO DE PDF PARA CELULAR E PC
+# 🎨 ESTILOS VISUAIS E MOTOR BLINDADO DE PDF PARA CELULAR
 # =====================================================================
 st.markdown("""
     <style>
@@ -43,60 +42,58 @@ st.markdown("""
         color: white !important;
     }
     
-    /* CONFIGURAÇÕES ESTRITAS PARA IMPRESSÃO (ESTÁVEL PARA MOBILE) */
+    /* 🚨 CONFIGURAÇÕES ESTRITAS PARA IMPRESSÃO (O ANTÍDOTO DO TELEMÓVEL) */
     @media print {
         @page {
             size: A4 portrait;
             margin: 1cm; 
         }
         
-        html, body, .stApp, main, .block-container {
+        /* DESLIGAR O FLEXBOX: Transforma as colunas e blocos em elementos simples.
+           Isto impede que o motor de PDF do telemóvel crash e corrompa o arquivo! */
+        html, body, .stApp, main, .block-container, 
+        [data-testid="stVerticalBlock"], 
+        [data-testid="stHorizontalBlock"],
+        [data-testid="column"] {
+            display: block !important;
             height: auto !important;
-            position: relative !important;
-            overflow: visible !important;
-            max-width: 100% !important;
             width: 100% !important;
-            padding: 0 !important;
-            margin: 0 !important;
+            position: static !important;
+            overflow: visible !important;
+            box-shadow: none !important;
+            float: none !important;
         }
         
-        /* Oculta interface e botões do sistema, inclusive o nosso botão nativo */
+        /* Oculta interface e botões do sistema */
         section[data-testid="stSidebar"], 
         header[data-testid="stHeader"], 
         div[data-testid="stSelectbox"],
-        iframe, 
-        #btn-imprimir,
         .no-print,
         details:not([open]) { 
             display: none !important; 
-            height: 0 !important;
-            visibility: hidden !important;
         }
 
+        /* Compacta caixas e títulos para caber bem na folha */
         div[data-testid="stAlert"] { padding: 10px !important; margin-bottom: 5px !important; }
         h1 { font-size: 26px !important; margin-top: 0 !important; padding-top: 0 !important; margin-bottom: 5px !important; }
         h3 { font-size: 18px !important; margin-top: 5px !important; margin-bottom: 5px !important;}
         h4 { font-size: 16px !important; margin-top: 5px !important; margin-bottom: 5px !important;}
         p { margin-bottom: 5px !important; }
 
+        /* Garante que os gráficos não cortem */
         .stPlotlyChart, .stPlotlyChart > div, .js-plotly-plot, .plot-container {
             overflow: visible !important;
             page-break-inside: avoid !important;
         }
 
-        [data-testid="stHorizontalBlock"] { page-break-inside: avoid !important; align-items: flex-start !important; }
-        [data-testid="stVerticalBlock"], [data-testid="stExpander"] { page-break-inside: avoid !important; margin-bottom: 5px !important; }
+        /* Protege quebra de página */
+        [data-testid="stExpander"] { page-break-inside: avoid !important; margin-bottom: 5px !important; }
         h1, h2, h3, h4, h5, h6 { page-break-after: avoid !important; }
         
         * {
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
         }
-    }
-    
-    /* Efeito de hover (mouse em cima) no botão */
-    #btn-imprimir:hover {
-        background-color: #c98d4b !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -241,32 +238,17 @@ if tela == "👤 Perfil do Candidato":
     
     with col_btn:
         st.write("")
-        # 🚨 TRUQUE NINJA: Criamos um botão puro HTML que o Streamlit aceita
-        st.markdown(f"""
-            <button id="btn-imprimir" style="
+        # 🚨 BOTÃO LIMPO: Apenas chama a função nativa de impressão (Sem truques, sem erros)
+        st.markdown("""
+            <button onclick="window.print()" class="no-print" style="
                 background-color: #DDA15E; color: white; border: none; padding: 10px 15px; 
                 border-radius: 5px; cursor: pointer; font-family: sans-serif; font-weight: bold;
-                font-size: 14px; width: 100%; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.3s;
+                font-size: 14px; width: 100%; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
                 margin-top: 22px; -webkit-tap-highlight-color: transparent;
             ">
                 📥 Salvar PDF do Candidato
             </button>
         """, unsafe_allow_html=True)
-        
-        # 🚨 CÓDIGO INVISÍVEL: Este código caça o botão na página e dá-lhe os "poderes" de impressão
-        components.html(f"""
-            <script>
-                const btn = window.parent.document.getElementById('btn-imprimir');
-                if (btn) {{
-                    btn.addEventListener('click', function() {{
-                        window.parent.document.title = "MapeiaAI - {candidato_sel}";
-                        setTimeout(function() {{
-                            window.parent.print();
-                        }}, 300);
-                    }});
-                }}
-            </script>
-        """, height=0)
         
     st.markdown('<hr class="no-print" style="margin: 0.5em 0;">', unsafe_allow_html=True)
     
@@ -336,7 +318,7 @@ if tela == "👤 Perfil do Candidato":
                 "Gato": {"fortes": "Excelente comunicação interpessoal, mediação de conflitos, facilidade para trabalhar em equipe.", "fracos": "Dificuldade para dar feedbacks duros, tendência a evitar confrontos necessários."}
             }
             
-            # 🚨 LÓGICA DE CRUZAMENTO DE VAGA CORRIGIDA!
+            # LÓGICA DE CRUZAMENTO DE VAGA CORRIGIDA (Com as palavras-chave novas)
             vaga_lower = str(vaga_alvo).lower()
             
             if any(k in vaga_lower for k in ["contab", "financ", "fiscal", "lobo", "adm", "process", "ti", "suport", "auditor", "qualidad", "estoque", "logistica"]):
@@ -370,7 +352,7 @@ if tela == "👤 Perfil do Candidato":
                     if top2_valor > 15:
                         st.write(f"• **{top2_nome}:** {detalhes_perfis[top2_nome]['fracos']}")
 
-        # 🎯 BLOCO 3: CONCLUSÃO CORRIGIDA
+        # 🎯 BLOCO 3: CONCLUSÃO (COM A CORREÇÃO DE VAGA GERAL)
         with st.container():
             st.markdown("#### 🎯 Alinhamento com a Função & Conclusão")
             
@@ -387,7 +369,7 @@ if tela == "👤 Perfil do Candidato":
                 st.markdown(f"**Engenharia de Cargo:** A vaga indicada (**{vaga_alvo}**) possui características do tipo *{tipo_vaga}*. Para este cenário, os perfis recomendados são **{', '.join(perfis_ideais)}**.\n\nO candidato combina essa estrutura com um canal predominantemente **{predominante_pnl}**, o que significa que ele {pnl_detalhes[predominante_pnl]}")
                 
             with col_concl2:
-                # Agora o sistema sabe lidar com vagas desconhecidas sem dar "Contratar" automaticamente!
+                # Sistema avisa que a vaga requer Avaliação Humana caso não reconheça o nome
                 if is_general:
                     st.warning("🟡 RECOMENDAÇÃO: **AVALIAÇÃO DO GESTOR**")
                     st.caption("👀 **Justificativa:** O título da vaga não tem um perfil engessado. Avalie se as forças do candidato atendem à rotina.")
