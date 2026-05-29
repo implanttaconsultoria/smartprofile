@@ -4,7 +4,6 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 from streamlit_gsheets import GSheetsConnection
-import streamlit.components.v1 as components
 
 # =====================================================================
 # 🪄 TRUQUE DE COMPATIBILIDADE (RENDER)
@@ -50,7 +49,6 @@ st.markdown("""
             margin: 1cm; 
         }
         
-        /* Libera as amarras do layout para o telemóvel não cortar nem corromper */
         html, body, .stApp, main, .block-container {
             height: auto !important;
             position: relative !important;
@@ -65,27 +63,24 @@ st.markdown("""
         section[data-testid="stSidebar"], 
         header[data-testid="stHeader"], 
         div[data-testid="stSelectbox"],
-        iframe, 
         .no-print,
         details:not([open]) { 
             display: none !important; 
             height: 0 !important;
+            visibility: hidden !important;
         }
 
-        /* Compacta caixas e títulos */
         div[data-testid="stAlert"] { padding: 10px !important; margin-bottom: 5px !important; }
         h1 { font-size: 26px !important; margin-top: 0 !important; padding-top: 0 !important; margin-bottom: 5px !important; }
         h3 { font-size: 18px !important; margin-top: 5px !important; margin-bottom: 5px !important;}
         h4 { font-size: 16px !important; margin-top: 5px !important; margin-bottom: 5px !important;}
         p { margin-bottom: 5px !important; }
 
-        /* Garante que os gráficos carreguem perfeitamente */
         .stPlotlyChart, .stPlotlyChart > div, .js-plotly-plot, .plot-container {
             overflow: visible !important;
             page-break-inside: avoid !important;
         }
 
-        /* Protege quebra de página */
         [data-testid="stHorizontalBlock"] { page-break-inside: avoid !important; align-items: flex-start !important; }
         [data-testid="stVerticalBlock"], [data-testid="stExpander"] { page-break-inside: avoid !important; margin-bottom: 5px !important; }
         h1, h2, h3, h4, h5, h6 { page-break-after: avoid !important; }
@@ -231,35 +226,25 @@ else:
 # =====================================================================
 if tela == "👤 Perfil do Candidato":
     
-    # 🌟 1. CONTROLES NO TOPO ABSOLUTO
+    # 🌟 CONTROLES NO TOPO ABSOLUTO
     col_sel, col_btn = st.columns([3, 1.5])
     with col_sel:
         candidato_sel = st.selectbox("Selecione o Candidato:", lista_candidatos)
     
     with col_btn:
         st.write("")
-        # CÓDIGO JS SIMPLIFICADO: Foca na janela e imprime direto para evitar falhas no Mobile
-        script_pdf = """
-        <script>
-            function imprimirRelatorio() {
-                try {
-                    window.parent.focus();
-                    window.parent.print();
-                } catch(e) {
-                    window.print();
-                }
-            }
-        </script>
-        <button onclick="imprimirRelatorio()" style="
-            background-color: #DDA15E; color: white; border: none; padding: 15px 15px; 
-            border-radius: 5px; cursor: pointer; font-family: sans-serif; font-weight: bold;
-            font-size: 14px; width: 100%; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.3s;
-            margin-top: 10px; -webkit-tap-highlight-color: transparent;
-        " onmouseover="this.style.backgroundColor='#c98d4b'" onmouseout="this.style.backgroundColor='#DDA15E'">
-            📥 Salvar PDF
-        </button>
+        # 🚨 MAGIA MOBILE: Criamos um botão diretamente na raiz do HTML (sem iframes que corrompem o PDF)
+        botao_imprimir = f"""
+        <a href="#" onclick="document.title='MapeiaAI - {candidato_sel}'; window.print(); return false;" class="no-print" style="
+            display: block; text-align: center; background-color: #DDA15E; color: white;
+            padding: 10px 15px; border-radius: 5px; text-decoration: none; font-family: sans-serif;
+            font-weight: bold; font-size: 14px; width: 100%; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: 0.3s; margin-top: 22px; -webkit-tap-highlight-color: transparent;
+        ">
+            📥 Salvar PDF do Candidato
+        </a>
         """
-        components.html(script_pdf, height=85)
+        st.markdown(botao_imprimir, unsafe_allow_html=True)
         
     st.markdown('<hr class="no-print" style="margin: 0.5em 0;">', unsafe_allow_html=True)
     
