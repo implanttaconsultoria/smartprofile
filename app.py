@@ -50,12 +50,13 @@ st.markdown("""
             margin: 1cm; /* Margem reduzida para dar mais espaço ao conteúdo */
         }
         
-        /* 🚨 MAGIA AQUI: Oculta o botão de imprimir, a caixa de seleção e os menus! */
+        /* 🚨 MAGIA AQUI: Oculta botões, menus, caixas fechadas e elementos marcados como no-print! */
         section[data-testid="stSidebar"], 
         header[data-testid="stHeader"], 
         div[data-testid="stSelectbox"],
         iframe, 
-        .no-print { 
+        .no-print,
+        details:not([open]) { /* Esconde o Expander de "Respostas Brutas" pois está fechado */
             display: none !important; 
             height: 0 !important;
         }
@@ -174,7 +175,7 @@ df_dados = carregar_dados_planilha()
 # 🧮 1. PROCESSAMENTO PNL E ANIMAIS (FUNÇÕES)
 # =====================================================================
 def calcular_sistema_representacional(linha):
-    colunas_visual = ["Eu tomo decisões importantes baseados em: [o que me parece melhor]", "Durante uma discussão eu sou mais influenciado por: [se eu posso ou não ver o argumento da outra pessoa]", "Eu comunico mais facilmente o que se passa comigo: [do modo como me visto e aparento]", "É muito fácil para mim: [escolher as combinações de cores mais ricas e atraentes]", "Eu me percebo assim: [eu respondo fortemente às cores e à aparência de uma sala]"]
+    colunas_visual = ["Eu tomo decisões importantes baseados em: [o que me parece melhor]", "Durante uma discussão eu sou mais influenciado por: [se eu posso ou não ver o argumento da outra pessoa]", "Eu comunico mais facilmente o que se passa comigo: [do modo como me visto e aparento]", "É muito fácil para mim: [escolher as combinations de cores mais ricas e atraentes]", "Eu me percebo assim: [eu respondo fortemente às cores e à aparência de uma sala]"]
     colunas_auditivo = ["Eu tomo decisões importantes baseados em: [o que melhor me soar melhor]", "Durante uma discussão eu sou mais influenciado por: [tom de voz da outra pessoa]", "Eu comunico mais facilmente o que se passa comigo: [pelo tom da minha voz]", "É muito fácil para mim: [achar o volume e a sintonia ideais num sistema de som]", "Eu me percebo assim: [Se estou muito em sintonia com os sons do ambiente]"]
     colunas_cinestesico = ["Eu tomo decisões importantes baseados em: [intuição]", "Durante uma discussão eu sou mais influenciado por: [se eu entro em contato ou não com os sentimentos reais do outro]", "Eu comunico mais facilmente o que se passa comigo: [pelos sentimentos que compartilho]", "É muito fácil para mim: [escolher os móveis mais confortáveis]", "Eu me percebo assim: [eu sou muito sensível à maneira como a roupa veste o meu corpo]"]
     colunas_digital = ["Eu tomo decisões importantes baseados em: [um estudo preciso e minucioso do assunto]", "Durante uma discussão eu sou mais influenciado por: [a lógica do argumento da outra pessoa]", "Eu comunico mais facilmente o que se passa comigo: [pelas palavras que escolho]", "É muito fácil para mim: [selecionar o ponto mais relevante relativo a um assunto interessante]", "Eu me percebo assim: [se sou muito capaz de raciocinar com fatos e dados novos]"]
@@ -297,7 +298,7 @@ if tela == "👤 Perfil do Candidato":
         valores_canais = calcular_sistema_representacional(linha_cand)
         valores_animais = calcular_perfil_animais(linha_cand)
         
-        # 🌟 2. CABEÇALHO OFICIAL DO RELATÓRIO (É aqui que a impressão começa a ler)
+        # 🌟 2. CABEÇALHO OFICIAL DO RELATÓRIO
         with st.container():
             col_titulo, col_logo = st.columns([3.5, 1.5])
             with col_titulo:
@@ -309,17 +310,15 @@ if tela == "👤 Perfil do Candidato":
                 except:
                     pass
             
-            # CAIXAS DE INFORMAÇÃO LOGO ABAIXO DO TÍTULO (Ganhando espaço vertical!)
             col_a, col_b, col_c, col_d = st.columns(4)
             col_a.info(f"**Candidato:**\n\n**{candidato_sel}**")
             col_b.info(f"**Vaga / Função:**\n\n{vaga_alvo}")
             col_c.info(f"**Empresa:**\n\n{empresa_alvo}")
             col_d.info(f"**Data da Aplicação:**\n\n{data_teste}")
                 
-        # Br extra apenas na tela para respirar, desaparece na impressão para economizar espaço
         st.markdown('<br class="no-print">', unsafe_allow_html=True)
         
-        # 🟢 BLOCO 1: GRÁFICO DOS ANIMAIS (LAYOUT VERTICAL PARA PDF)
+        # 🟢 BLOCO 1: GRÁFICO DOS ANIMAIS
         with st.container():
             st.markdown("### 🦁 Perfil Comportamental Predominante")
             
@@ -341,7 +340,6 @@ if tela == "👤 Perfil do Candidato":
             )
             fig_animais.update_traces(textposition='inside', textinfo='percent+label')
             
-            # Gráfico otimizado
             fig_animais.update_layout(
                 height=240, 
                 showlegend=False, 
@@ -475,7 +473,8 @@ if tela == "👤 Perfil do Candidato":
             * **Se for Digital:** Vá direto ao ponto apresentando fatos, planilhas e lógicas claras. Evite apelo puramente emocional.
             """)
             
-            st.markdown("---")
+            # 🚨 MUDANÇA AQUI: A linha extra não será impressa, e as respostas brutas ocultadas no PDF
+            st.markdown('<hr class="no-print">', unsafe_allow_html=True)
             with st.expander("🔍 Ver Respostas Brutas do Teste Comportamental (Texto)", expanded=False):
                 perguntas_texto = list(gabarito_comportamental.keys())
                 for p in perguntas_texto:
