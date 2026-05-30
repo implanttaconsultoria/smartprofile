@@ -3,7 +3,7 @@ from fpdf import FPDF
 import os
 
 # =====================================================================
-# 🧮 1. LÓGICA DE CÁLCULO (A mesma inteligência do sistema principal)
+# 🧮 1. LÓGICA DE CÁLCULO
 # =====================================================================
 def calcular_sistema_representacional(linha):
     colunas_visual = ["Eu tomo decisões importantes baseados em: [o que me parece melhor]", "Durante uma discussão eu sou mais influenciado por: [se eu posso ou não ver o argumento da outra pessoa]", "Eu comunico mais facilmente o que se passa comigo: [do modo como me visto e aparento]", "É muito fácil para mim: [escolher as combinações de cores mais ricas e atraentes]", "Eu me percebo assim: [eu respondo fortemente às cores e à aparência de uma sala]"]
@@ -79,7 +79,7 @@ class PDF(FPDF):
         self.cell(0, 10, 'IMPLANTTA CONSULTORIA', ln=True, align='C')
         self.set_font('Helvetica', 'B', 12)
         self.set_text_color(100, 100, 100)
-        self.cell(0, 8, 'RELATÓRIO DE ENGENHARIA DE PERFIL - SÍNTESE EXECUTIVA', ln=True, align='C')
+        self.cell(0, 8, 'RELATORIO DE ENGENHARIA DE PERFIL - SINTESE EXECUTIVA', ln=True, align='C')
         self.line(10, 30, 200, 30)
         self.ln(10)
 
@@ -92,6 +92,8 @@ class PDF(FPDF):
     def chapter_body(self, text):
         self.set_font('Helvetica', '', 11)
         self.set_text_color(0, 0, 0)
+        # Substitui caracteres especiais problemáticos no PDF simples
+        text = text.replace('ç', 'c').replace('ã', 'a').replace('õ', 'o').replace('á', 'a').replace('é', 'e').replace('í', 'i').replace('ó', 'o').replace('ú', 'u').replace('ê', 'e')
         self.multi_cell(0, 6, text)
         self.ln(5)
 
@@ -101,7 +103,6 @@ class PDF(FPDF):
 def gerar_pdf(nome_busca):
     print(f"A procurar candidato: {nome_busca}...")
     
-    # URL de Exportação Direta da Planilha Google
     url_csv = "https://docs.google.com/spreadsheets/d/1cz6O2iSync1c2E-lNGmEsgwMBrOgB2DHWz02A-y2g1Y/export?format=csv"
     
     try:
@@ -109,7 +110,18 @@ def gerar_pdf(nome_busca):
     except Exception as e:
         return f"Erro ao ler a planilha: {e}"
     
-    # Limpeza de colunas
+    # 🚨 LÓGICA ROBUSTA PARA ENCONTRAR O CABEÇALHO (Igual ao site principal)
+    cabecalhos_atuais = [str(c).lower().strip() for c in df.columns]
+    if not any("nome" in c for c in cabecalhos_atuais):
+        for i, row in df.iterrows():
+            valores_linha = [str(val).lower().strip() for val in row.values]
+            if "nome" in valores_linha or "nome do candidato" in valores_linha:
+                df.columns = row.values 
+                df = df.iloc[i+1:].reset_index(drop=True) 
+                break
+                
+    df = df.loc[:, df.columns.notna()]
+    
     coluna_nome = None
     for col in df.columns:
         if "nome" in str(col).lower():
@@ -117,20 +129,22 @@ def gerar_pdf(nome_busca):
             break
             
     if not coluna_nome:
-        return "Erro: Coluna de Nome não encontrada."
+        return "Erro: Coluna 'Nome' nao encontrada na planilha. Verifique o Google Sheets."
 
+    df = df.dropna(subset=[coluna_nome])
+    
     # Procurar o candidato (ignorando maiúsculas/minúsculas)
-    df_cand = df[df[coluna_nome].astype(str).str.lower().str.contains(nome_busca.lower())]
+    df_cand = df[df[coluna_nome].astype(str).str.lower().str.contains(nome_busca.lower().strip())]
     
     if df_cand.empty:
-        return f"Candidato '{nome_busca}' não encontrado na planilha."
+        return f"Candidato '{nome_busca}' nao encontrado. Verifique se o nome foi digitado corretamente."
     
     linha_cand = df_cand.iloc[-1] # Pega a resposta mais recente caso haja duplicados
     
     nome_real = linha_cand[coluna_nome]
-    vaga_alvo = linha_cand.get("Setor", "Não Informado")
-    empresa_alvo = linha_cand.get("Empresa", "Não Informada")
-    data_teste = linha_cand.get("Carimbo de data/hora", "Não Informada")
+    vaga_alvo = linha_cand.get("Setor", "Nao Informado")
+    empresa_alvo = linha_cand.get("Empresa", "Nao Informada")
+    data_teste = linha_cand.get("Carimbo de data/hora", "Nao Informada")
     
     # Fazer os cálculos
     valores_animais = calcular_perfil_animais(linha_cand)
@@ -145,20 +159,20 @@ def gerar_pdf(nome_busca):
     # Lógica da Vaga
     vaga_lower = str(vaga_alvo).lower()
     if any(k in vaga_lower for k in ["contab", "financ", "fiscal", "lobo", "adm", "process", "ti", "suport", "auditor", "qualidad", "estoque", "logistica"]):
-        tipo_vaga = "Processos/Contábil/Analítico"
-        perfis_ideais = ["Lobo", "Tubarão"]
+        tipo_vaga = "Processos/Contabil/Analitico"
+        perfis_ideais = ["Lobo", "Tubarao"]
         is_general = False
     elif any(k in vaga_lower for k in ["vend", "comercial", "geren", "diretor", "lider", "meta", "tubarao", "expansao", "negocio"]):
-        tipo_vaga = "Comercial/Liderança/Execução"
-        perfis_ideais = ["Tubarão", "Águia"]
+        tipo_vaga = "Comercial/Lideranca/Execucao"
+        perfis_ideais = ["Tubarao", "Aguia"]
         is_general = False
     elif any(k in vaga_lower for k in ["rh", "human", "atend", "gato", "client", "relacionamento", "cs", "sucesso", "pessoal", "dp", "psico", "recep"]):
         tipo_vaga = "Pessoas/Atendimento/Suporte"
-        perfis_ideais = ["Gato", "Águia"]
+        perfis_ideais = ["Gato", "Aguia"]
         is_general = False
     else:
-        tipo_vaga = "Função Dinâmica / Não Específica"
-        perfis_ideais = ["(Depende do escopo exato da vaga)"]
+        tipo_vaga = "Funcao Dinamica / Nao Especifica"
+        perfis_ideais = ["(Depende do escopo da vaga)"]
         is_general = True
         
     convergente = (top1_nome in perfis_ideais)
@@ -173,33 +187,33 @@ def gerar_pdf(nome_busca):
     pdf.set_font('Helvetica', 'B', 11)
     pdf.cell(0, 6, f"Candidato: {nome_real}", ln=True)
     pdf.set_font('Helvetica', '', 11)
-    pdf.cell(0, 6, f"Vaga/Função: {vaga_alvo} | Empresa: {empresa_alvo}", ln=True)
-    pdf.cell(0, 6, f"Data da Aplicação: {data_teste}", ln=True)
+    pdf.cell(0, 6, f"Vaga/Funcao: {vaga_alvo} | Empresa: {empresa_alvo}", ln=True)
+    pdf.cell(0, 6, f"Data da Aplicacao: {data_teste}", ln=True)
     pdf.ln(5)
     
     # Secção 1: Animais
     pdf.chapter_title("1. PERFIL COMPORTAMENTAL PREDOMINANTE")
     texto_animais = (
-        f"Perfil Primário: {top1_nome} ({top1_valor}%)\n"
-        f"Perfil Secundário: {top2_nome} ({top2_valor}%)\n\n"
-        f"Parecer Analítico:\nDistribuição com predominância de {top1_nome}, com suporte de {top2_nome}."
+        f"Perfil Primario: {top1_nome} ({top1_valor}%)\n"
+        f"Perfil Secundario: {top2_nome} ({top2_valor}%)\n\n"
+        f"Parecer Analitico:\nDistribuicao com predominancia de {top1_nome}, com suporte de {top2_nome}."
     )
     pdf.chapter_body(texto_animais)
     
     # Secção 2: Alinhamento
-    pdf.chapter_title("2. ALINHAMENTO COM A FUNÇÃO (VAGA)")
+    pdf.chapter_title("2. ALINHAMENTO COM A FUNCAO (VAGA)")
     if is_general:
         veredicto = "AVALIACAO DO GESTOR"
-        justificativa = "O título da vaga não tem um perfil engessado. Avalie se as forças do candidato atendem à rotina."
+        justificativa = "O titulo da vaga nao tem um perfil engessado. Avalie as forcas do candidato."
     elif convergente:
         veredicto = "CONTRATAR"
-        justificativa = "Alta aderência comportamental com o escopo da vaga."
+        justificativa = "Alta aderencia comportamental com o escopo da vaga."
     elif top2_nome in perfis_ideais:
         veredicto = "AVALIAR COM RESSALVAS"
-        justificativa = "O perfil principal difere do esperado, mas o secundário equilibra."
+        justificativa = "O perfil principal difere do esperado, mas o secundario equilibra."
     else:
         veredicto = "DESALINHADO A VAGA"
-        justificativa = "Desalinhamento natural com as rotinas diárias da função."
+        justificativa = "Desalinhamento natural com as rotinas diarias da funcao."
         
     texto_vaga = (
         f"Engenharia do Cargo: {tipo_vaga}\n"
@@ -216,7 +230,7 @@ def gerar_pdf(nome_busca):
         marcador = " (Predominante)" if canal == predominante_pnl else ""
         texto_pnl += f"- {canal}: {valor}% {marcador}\n"
         
-    texto_pnl += f"\nManual de Relacionamento:\nO candidato possui o canal {predominante_pnl} mais elevado. Adapte a comunicação para este canal para maior eficácia na liderança diária."
+    texto_pnl += f"\nManual de Relacionamento:\nO candidato possui o canal {predominante_pnl} mais elevado. Adapte a comunicacao para este canal para maior eficacia na lideranca."
     
     pdf.chapter_body(texto_pnl)
     
@@ -225,10 +239,5 @@ def gerar_pdf(nome_busca):
     pdf.output(nome_ficheiro)
     return nome_ficheiro
 
-# =====================================================================
-# TESTE RÁPIDO DO SCRIPT
-# =====================================================================
 if __name__ == "__main__":
-    # Aqui você digita o nome para testar se o script está a gerar o PDF
-    arquivo_gerado = gerar_pdf("José Pedro")
-    print(f"Sucesso! PDF salvo como: {arquivo_gerado}")
+    gerar_pdf("José Pedro")
