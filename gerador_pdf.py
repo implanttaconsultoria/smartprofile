@@ -1,6 +1,19 @@
 import pandas as pd
 from fpdf import FPDF
 import os
+import unicodedata
+
+# =====================================================================
+# 🧹 FUNÇÃO PARA LIMPAR ACENTOS E MAIÚSCULAS
+# =====================================================================
+def normalizar_texto(texto):
+    if pd.isna(texto):
+        return ""
+    # Transforma em minúsculas e remove espaços das pontas
+    texto = str(texto).lower().strip()
+    # Remove acentos (é -> e, ã -> a, ç -> c)
+    texto = unicodedata.normalize('NFKD', texto).encode('ASCII', 'ignore').decode('utf-8')
+    return texto
 
 # =====================================================================
 # 🧮 1. LÓGICA DE CÁLCULO
@@ -92,7 +105,6 @@ class PDF(FPDF):
     def chapter_body(self, text):
         self.set_font('Helvetica', '', 11)
         self.set_text_color(0, 0, 0)
-        # Substitui caracteres especiais problemáticos no PDF simples
         text = text.replace('ç', 'c').replace('ã', 'a').replace('õ', 'o').replace('á', 'a').replace('é', 'e').replace('í', 'i').replace('ó', 'o').replace('ú', 'u').replace('ê', 'e')
         self.multi_cell(0, 6, text)
         self.ln(5)
@@ -110,7 +122,6 @@ def gerar_pdf(nome_busca):
     except Exception as e:
         return f"Erro ao ler a planilha: {e}"
     
-    # 🚨 LÓGICA ROBUSTA PARA ENCONTRAR O CABEÇALHO (Igual ao site principal)
     cabecalhos_atuais = [str(c).lower().strip() for c in df.columns]
     if not any("nome" in c for c in cabecalhos_atuais):
         for i, row in df.iterrows():
@@ -129,19 +140,23 @@ def gerar_pdf(nome_busca):
             break
             
     if not coluna_nome:
-        return "Erro: Coluna 'Nome' nao encontrada na planilha. Verifique o Google Sheets."
+        return "Erro: Coluna 'Nome' nao encontrada na planilha."
 
     df = df.dropna(subset=[coluna_nome])
     
-    # Procurar o candidato (ignorando maiúsculas/minúsculas)
-    df_cand = df[df[coluna_nome].astype(str).str.lower().str.contains(nome_busca.lower().strip())]
+    # 🚨 A NOVA LÓGICA DE PROCURA BLINDADA (Ignora Acentos e Maiúsculas)
+    busca_limpa = normalizar_texto(nome_busca)
+    nomes_na_planilha = df[coluna_nome].apply(normalizar_texto)
+    
+    # Filtra a planilha
+    df_cand = df[nomes_na_planilha.str.contains(busca_limpa, na=False)]
     
     if df_cand.empty:
-        return f"Candidato '{nome_busca}' nao encontrado. Verifique se o nome foi digitado corretamente."
+        return f"Candidato '{nome_busca}' nao encontrado. Certifique-se de escrever pelo menos uma parte do nome."
     
     linha_cand = df_cand.iloc[-1] # Pega a resposta mais recente caso haja duplicados
     
-    nome_real = linha_cand[coluna_nome]
+    nome_real = str(linha_cand[coluna_nome]).strip()
     vaga_alvo = linha_cand.get("Setor", "Nao Informado")
     empresa_alvo = linha_cand.get("Empresa", "Nao Informada")
     data_teste = linha_cand.get("Carimbo de data/hora", "Nao Informada")
@@ -183,7 +198,6 @@ def gerar_pdf(nome_busca):
     pdf = PDF()
     pdf.add_page()
     
-    # Cabeçalho de Dados
     pdf.set_font('Helvetica', 'B', 11)
     pdf.cell(0, 6, f"Candidato: {nome_real}", ln=True)
     pdf.set_font('Helvetica', '', 11)
@@ -191,7 +205,6 @@ def gerar_pdf(nome_busca):
     pdf.cell(0, 6, f"Data da Aplicacao: {data_teste}", ln=True)
     pdf.ln(5)
     
-    # Secção 1: Animais
     pdf.chapter_title("1. PERFIL COMPORTAMENTAL PREDOMINANTE")
     texto_animais = (
         f"Perfil Primario: {top1_nome} ({top1_valor}%)\n"
@@ -200,7 +213,6 @@ def gerar_pdf(nome_busca):
     )
     pdf.chapter_body(texto_animais)
     
-    # Secção 2: Alinhamento
     pdf.chapter_title("2. ALINHAMENTO COM A FUNCAO (VAGA)")
     if is_general:
         veredicto = "AVALIACAO DO GESTOR"
@@ -223,7 +235,6 @@ def gerar_pdf(nome_busca):
     )
     pdf.chapter_body(texto_vaga)
     
-    # Secção 3: PNL
     pdf.chapter_title("3. SISTEMA REPRESENTACIONAL (PNL)")
     texto_pnl = ""
     for canal, valor in valores_canais.items():
@@ -234,8 +245,7 @@ def gerar_pdf(nome_busca):
     
     pdf.chapter_body(texto_pnl)
     
-    # Salvar Ficheiro
-    nome_ficheiro = f"Parecer_{nome_real.replace(' ', '_')}.pdf"
+    nome_ficheiro = f"Parecer_{normalizar_texto(nome_real).replace(' ', '_')}.pdf"
     pdf.output(nome_ficheiro)
     return nome_ficheiro
 
