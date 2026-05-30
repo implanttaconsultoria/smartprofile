@@ -1,18 +1,23 @@
 import pandas as pd
 from fpdf import FPDF
-import os
 import unicodedata
+import os
 
 # =====================================================================
-# 🧹 FUNÇÃO PARA LIMPAR ACENTOS E MAIÚSCULAS
+# 🧹 FUNÇÕES DE LIMPEZA (Evita crash do PDF com acentos)
 # =====================================================================
-def normalizar_texto(texto):
-    if pd.isna(texto):
-        return ""
-    # Transforma em minúsculas e remove espaços das pontas
+def normalizar_busca(texto):
+    if pd.isna(texto): return ""
     texto = str(texto).lower().strip()
-    # Remove acentos (é -> e, ã -> a, ç -> c)
-    texto = unicodedata.normalize('NFKD', texto).encode('ASCII', 'ignore').decode('utf-8')
+    return unicodedata.normalize('NFKD', texto).encode('ASCII', 'ignore').decode('utf-8')
+
+def text_pdf(texto):
+    """Remove acentos para o FPDF básico não falhar na geração"""
+    if not isinstance(texto, str): return ""
+    reps = {'ç':'c', 'ã':'a', 'õ':'o', 'á':'a', 'é':'e', 'í':'i', 'ó':'o', 'ú':'u', 
+            'ê':'e', 'â':'a', 'ô':'o', 'Ç':'C', 'Ã':'A', 'Õ':'O', 'Á':'A', 'É':'E', 'Í':'I', 'Ó':'O', 'Ú':'U'}
+    for c, r in reps.items():
+        texto = texto.replace(c, r)
     return texto
 
 # =====================================================================
@@ -24,20 +29,18 @@ def calcular_sistema_representacional(linha):
     colunas_cinestesico = ["Eu tomo decisões importantes baseados em: [intuição]", "Durante uma discussão eu sou mais influenciado por: [se eu entro em contato ou não com os sentimentos reais do outro]", "Eu comunico mais facilmente o que se passa comigo: [pelos sentimentos que compartilho]", "É muito fácil para mim: [escolher os móveis mais confortáveis]", "Eu me percebo assim: [eu sou muito sensível à maneira como a roupa veste o meu corpo]"]
     colunas_digital = ["Eu tomo decisões importantes baseados em: [um estudo preciso e minucioso do assunto]", "Durante uma discussão eu sou mais influenciado por: [a lógica do argumento da outra pessoa]", "Eu comunico mais facilmente o que se passa comigo: [pelas palavras que escolho]", "É muito fácil para mim: [selecionar o ponto mais relevante relativo a um assunto interessante]", "Eu me percebo assim: [se sou muito capaz de raciocinar com fatos e dados novos]"]
     
-    v_score = sum([pd.to_numeric(linha.get(col, 0), errors='coerce') for col in colunas_visual])
-    a_score = sum([pd.to_numeric(linha.get(col, 0), errors='coerce') for col in colunas_auditivo])
-    c_score = sum([pd.to_numeric(linha.get(col, 0), errors='coerce') for col in colunas_cinestesico])
-    d_score = sum([pd.to_numeric(linha.get(col, 0), errors='coerce') for col in colunas_digital])
+    v = sum([pd.to_numeric(linha.get(col, 0), errors='coerce') for col in colunas_visual])
+    a = sum([pd.to_numeric(linha.get(col, 0), errors='coerce') for col in colunas_auditivo])
+    c = sum([pd.to_numeric(linha.get(col, 0), errors='coerce') for col in colunas_cinestesico])
+    d = sum([pd.to_numeric(linha.get(col, 0), errors='coerce') for col in colunas_digital])
     
-    v_score = v_score if pd.notna(v_score) else 0
-    a_score = a_score if pd.notna(a_score) else 0
-    c_score = c_score if pd.notna(c_score) else 0
-    d_score = d_score if pd.notna(d_score) else 0
-    
-    total = v_score + a_score + c_score + d_score
+    v = v if pd.notna(v) else 0; a = a if pd.notna(a) else 0
+    c = c if pd.notna(c) else 0; d = d if pd.notna(d) else 0
+    total = v + a + c + d
     if total > 0:
-        return {"Visual": round((v_score / total) * 100, 1), "Auditivo": round((a_score / total) * 100, 1), "Cinestésico": round((c_score / total) * 100, 1), "Digital (Lógico)": round((d_score / total) * 100, 1)}
-    return {"Visual": 25.0, "Auditivo": 25.0, "Cinestésico": 25.0, "Digital (Lógico)": 25.0}
+        return {"Visual": round((v/total)*100, 1), "Auditivo": round((a/total)*100, 1), 
+                "Cinestésico": round((c/total)*100, 1), "Digital": round((d/total)*100, 1)}
+    return {"Visual": 25.0, "Auditivo": 25.0, "Cinestésico": 25.0, "Digital": 25.0}
 
 gabarito_comportamental = {
     "Eu sou": {"Idealista, criativo e visionário": "Águia", "Divertido, espiritual e benéfico": "Gato", "Confiável, meticuloso e previsível": "Lobo", "Focado, determinado e persistente": "Tubarão"},
@@ -69,7 +72,204 @@ gabarito_comportamental = {
 
 def calcular_perfil_animais(linha):
     pontos = {"Águia": 0, "Gato": 0, "Lobo": 0, "Tubarão": 0}
-    total_respondido = 0
+    total = 0
+    for perg, alts in gabarito_comportamental.items():
+        if perg in linha:
+            resp = str(linha.get(perg, "")).strip().lower()
+            for chave, animal in alts.items():
+                if chave.strip().lower() in resp:
+                    pontos[animal] += 1
+                    total += 1
+                    break
+    if total > 0:
+        return {a: round((v/total)*100, 1) for a, v in pontos.items()}
+    return {"Águia": 0, "Gato": 0, "Lobo": 0, "Tubarão": 0}
+
+# =====================================================================
+# 📄 2. CLASSE GERADORA DO PDF (Design Consultoria Premium)
+# =====================================================================
+class PDF(FPDF):
+    def header(self):
+        self.set_font('Helvetica', 'B', 16)
+        self.set_text_color(43, 92, 143)
+        self.cell(0, 10, text_pdf('IMPLANTTA CONSULTORIA'), ln=True, align='C')
+        self.set_font('Helvetica', 'B', 12)
+        self.set_text_color(100, 100, 100)
+        self.cell(0, 8, text_pdf('PARECER DE ENGENHARIA DE PERFIL'), ln=True, align='C')
+        self.line(10, 30, 200, 30)
+        self.ln(10)
+
+    def titulo_secao(self, title):
+        self.ln(3)
+        self.set_font('Helvetica', 'B', 11)
+        self.set_text_color(43, 92, 143)
+        self.cell(0, 8, text_pdf(title), ln=True)
+        self.set_text_color(0, 0, 0)
+
+    def texto_normal(self, text):
+        self.set_font('Helvetica', '', 10)
+        self.multi_cell(0, 6, text_pdf(text))
+        self.ln(2)
+
+    def texto_destaque(self, text):
+        self.set_font('Helvetica', 'B', 10)
+        self.multi_cell(0, 6, text_pdf(text))
+        self.ln(2)
+
+# =====================================================================
+# 🧠 Dicionários de Inteligência de Texto
+# =====================================================================
+def texto_animal(animal, perc):
+    if animal == "Gato":
+        if perc >= 25: return "Indica uma pessoa colaborativa, empática e prestativa. Facilidade para trabalhar em equipe, cordialidade e disposição para manter um ambiente harmonioso."
+        else: return "Menor foco no relacionamento interpessoal constante. Pode apresentar um perfil mais voltado para a tarefa do que para o acolhimento da equipa."
+    elif animal == "Lobo":
+        if perc >= 25: return "Demonstra excelente atenção aos detalhes, respeito a regras e procedimentos. Boa capacidade de organização e constância com rotinas."
+        else: return "Perfil mais flexível, com menor apego a regras rígidas. Pode preferir ambientes onde haja menos microgestão e maior liberdade operacional."
+    elif animal == "Tubarão":
+        if perc >= 25: return "Revela forte senso de urgência, foco absoluto em resultados, coragem para decidir e assertividade na execução de tarefas."
+        else: return "Percentual moderado-baixo indicando menor tendência a confrontos. Perfil mais cuidadoso que pode precisar de tempo para agir em situações de alta pressão."
+    elif animal == "Águia":
+        if perc >= 25: return "Sugere grande capacidade criativa, visão de futuro, facilidade em inovar e propor melhorias para processos engessados."
+        else: return "Preferência por processos definidos e estruturados. Mostra menor foco na inovação disruptiva e maior conforto no que já está validado."
+
+# =====================================================================
+# ⚙️ 3. FUNÇÃO PRINCIPAL
+# =====================================================================
+def gerar_pdf(nome_busca):
+    url_csv = "https://docs.google.com/spreadsheets/d/1cz6O2iSync1c2E-lNGmEsgwMBrOgB2DHWz02A-y2g1Y/export?format=csv"
+    try: df = pd.read_csv(url_csv)
+    except Exception as e: return f"Erro ao ler a planilha: {e}"
+    
+    cabecalhos = [str(c).lower().strip() for c in df.columns]
+    if not any("nome" in c for c in cabecalhos):
+        for i, row in df.iterrows():
+            vals = [str(val).lower().strip() for val in row.values]
+            if "nome" in vals or "nome do candidato" in vals:
+                df.columns = row.values; df = df.iloc[i+1:].reset_index(drop=True); break
+                
+    col_nome = next((c for c in df.columns if "nome" in str(c).lower()), None)
+    if not col_nome: return "Erro: Coluna 'Nome' nao encontrada."
+
+    df = df.dropna(subset=[col_nome])
+    busca_limpa = normalizar_busca(nome_busca)
+    nomes_plan = df[col_nome].apply(normalizar_busca)
+    df_cand = df[nomes_plan.str.contains(busca_limpa, na=False)]
+    
+    if df_cand.empty: return f"Candidato '{nome_busca}' nao encontrado."
+    linha = df_cand.iloc[-1]
+    
+    nome_real = str(linha[col_nome]).strip()
+    vaga = linha.get("Setor", "Nao Informado")
+    empresa = linha.get("Empresa", "Nao Informada")
+    data_app = linha.get("Carimbo de data/hora", "Nao Informada")
+    
+    # Cálculos
+    animais = calcular_perfil_animais(linha)
+    pnl = calcular_sistema_representacional(linha)
+    
+    animais_ord = sorted(animais.items(), key=lambda x: x[1], reverse=True)
+    pnl_ord = sorted(pnl.items(), key=lambda x: x[1], reverse=True)
+    
+    t1_n, t1_v = animais_ord[0]
+    t2_n, t2_v = animais_ord[1]
+    pnl_top_n, pnl_top_v = pnl_ord[0]
+    
+    # Lógica de Vagas e Veredicto
+    v_low = str(vaga).lower()
+    if any(k in v_low for k in ["contab", "financ", "fiscal", "lobo", "adm", "process", "ti", "suport", "auditor", "qualidad", "estoque", "logistica"]):
+        tipo = "Processos/Operacional/Analítico"
+        fortes = "Organização, conformidade com processos, foco em detalhes e execução consistente."
+        fracos = "Pode evitar improvisos rápidos ou situações de conflito intenso."
+        se_encaixa = (t1_n in ["Lobo", "Tubarão", "Gato"]) 
+    elif any(k in v_low for k in ["vend", "comercial", "geren", "diretor", "lider", "meta", "tubarao", "expansao", "negocio"]):
+        tipo = "Comercial/Liderança/Resultados"
+        fortes = "Foco em metas, persuasão, resiliência sob pressão e relacionamento."
+        fracos = "Pode apresentar dificuldades com rotinas altamente burocráticas ou rotineiras."
+        se_encaixa = (t1_n in ["Tubarão", "Águia", "Gato"])
+    elif any(k in v_low for k in ["rh", "human", "atend", "gato", "client", "relacionamento", "cs", "sucesso", "pessoal", "dp", "psico", "recep"]):
+        tipo = "Pessoas/Atendimento/Suporte"
+        fortes = "Escuta ativa, empatia, mediação de conflitos e forte trabalho em equipa."
+        fracos = "Dificuldade em tomar decisões frias que prejudiquem o clima da equipa."
+        se_encaixa = (t1_n in ["Gato", "Águia", "Lobo"])
+    else:
+        tipo = "Função Dinâmica / Geral"
+        fortes = "Forças dependem diretamente do escopo diário e do perfil da chefia."
+        fracos = "Requer alinhamento claro de expectativas no momento da integração."
+        se_encaixa = True
+
+    if se_encaixa:
+        veredicto = "CONTRATAR"
+        just_veredicto = f"O candidato apresenta excelente aderência à função, com destaque para características de {t1_n} e {t2_n}, que favorecem o desempenho em vagas de {tipo}."
+    elif t2_n in ["Tubarão", "Lobo", "Gato", "Águia"]: # Simplificação lógica
+        veredicto = "CONTRATAR COM RESSALVAS"
+        just_veredicto = f"O perfil principal ({t1_n}) difere um pouco do esperado para {tipo}, mas o secundário ({t2_n}) equilibra. Exigirá acompanhamento nos primeiros meses."
+    else:
+        veredicto = "NÃO CONTRATAR"
+        just_veredicto = "O perfil natural do candidato demonstra desalinhamento com as exigências rotineiras e comportamentais desta vaga específica."
+
+    # =====================================================================
+    # 🎨 GERAÇÃO DO PDF
+    # =====================================================================
+    pdf = PDF()
+    pdf.add_page()
+    
+    # Cabeçalho Fixo
+    pdf.set_font('Helvetica', 'B', 10)
+    pdf.cell(0, 5, text_pdf(f"Candidato: {nome_real}"), ln=True)
+    pdf.set_font('Helvetica', '', 10)
+    pdf.cell(0, 5, text_pdf(f"Cargo Avaliado: {vaga}"), ln=True)
+    pdf.cell(0, 5, text_pdf(f"Empresa: {empresa}"), ln=True)
+    pdf.cell(0, 5, text_pdf(f"Data e hora do preenchimento: {data_app}"), ln=True)
+    pdf.ln(5)
+
+    # Introdução
+    intro = (f"O candidato {nome_real} apresentou o seguinte resultado no teste de perfil comportamental: "
+             f"{animais['Tubarão']}% Tubarão, {animais['Lobo']}% Lobo, {animais['Águia']}% Águia e {animais['Gato']}% Gato.\n\n"
+             f"Ex.: O perfil {t1_n} teve {t1_v}% de aderência (predominante), seguido do perfil {t2_n} com {t2_v}% de aderência.")
+    pdf.texto_normal(intro)
+
+    # Análise Comportamental
+    pdf.titulo_secao("Análise do Perfil Comportamental")
+    for animal in ["Tubarão", "Lobo", "Gato", "Águia"]:
+        texto_dinamico = texto_animal(animal, animais[animal])
+        pdf.texto_normal(f"- {animal} ({animais[animal]}%): {texto_dinamico}")
+
+    # Pontos Fortes e Fracos
+    pdf.titulo_secao("Pontos Fortes e Fracos do candidato em relação à vaga")
+    pdf.texto_normal(f"Considerando as exigências para o setor de {vaga} ({tipo}):\n")
+    pdf.texto_normal(f"✔ Pontos Fortes: {fortes}")
+    pdf.texto_normal(f"⚠ Pontos Fracos/Desenvolver: {fracos}")
+
+    # Perfil Representacional
+    pdf.titulo_secao("Análise do Perfil Representacional")
+    pdf.texto_normal(f"Resultados obtidos: {pnl['Visual']}% Visual, {pnl['Cinestésico']}% Cinestésico, {pnl['Auditivo']}% Auditivo e {pnl['Digital']}% Digital.")
+    
+    txt_pnl = f"Predominância do perfil {pnl_top_n} ({pnl_top_v}%). "
+    if pnl_top_n == "Digital": txt_pnl += "Indica forte tendência a processar informações de forma lógica, analisar procedimentos com racionalidade e valorizar precisão. A melhor abordagem é fornecer instruções claras e baseadas em factos."
+    elif pnl_top_n == "Cinestésico": txt_pnl += "Indica facilidade com atividades práticas e aprendizagem por execução. A melhor abordagem é o treino on-the-job, valorizando o lado humano e o acolhimento."
+    elif pnl_top_n == "Visual": txt_pnl += "Indica rapidez mental e aprendizagem por observação e mapas visuais. A melhor abordagem é manter contato visual, usar esquemas e mostrar o 'cenário geral'."
+    else: txt_pnl += "Indica forte capacidade de escuta e comunicação verbal. A melhor abordagem é o diálogo claro, feedbacks conversados e evitar dar ordens em locais muito ruidosos."
+    pdf.texto_normal(txt_pnl)
+
+    # Adequação ao Cargo
+    pdf.titulo_secao("Adequação ao Cargo")
+    pdf.texto_normal(just_veredicto)
+
+    # Pontos de Atenção
+    pdf.titulo_secao("Pontos de Atenção para a Gestão")
+    pdf.texto_normal(f"Caso o candidato seja integrado, o gestor direto deve ter em atenção que o colaborador, por ter traços fortes de {t1_n}, responderá melhor a um modelo de liderança que respeite a sua natureza. Deverá ser feito um alinhamento claro das expectativas nas primeiras semanas, focando nos pontos fracos descritos acima para mitigar quebras de produtividade.")
+
+    # Conclusão
+    pdf.titulo_secao("Conclusão do Parecer")
+    pdf.texto_destaque(f"Recomendação Final: {veredicto}")
+
+    nome_ficheiro = f"Parecer_{normalizar_busca(nome_real).replace(' ', '_')}.pdf"
+    pdf.output(nome_ficheiro)
+    return nome_ficheiro
+
+if __name__ == "__main__":
+    gerar_pdf("José Pedro")    total_respondido = 0
     for pergunta, alternativas in gabarito_comportamental.items():
         if pergunta in linha:
             resposta_cand = str(linha.get(pergunta, "")).strip().lower()
