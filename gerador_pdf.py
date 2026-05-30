@@ -4,16 +4,17 @@ import unicodedata
 import os
 
 # =====================================================================
-# 🧹 FUNÇÕES DE LIMPEZA (Evita crash do PDF com acentos)
+# FUNCOES DE LIMPEZA
 # =====================================================================
 def normalizar_busca(texto):
-    if pd.isna(texto): return ""
+    if pd.isna(texto):
+        return ""
     texto = str(texto).lower().strip()
     return unicodedata.normalize('NFKD', texto).encode('ASCII', 'ignore').decode('utf-8')
 
 def text_pdf(texto):
-    """Remove acentos para o FPDF básico não falhar na geração"""
-    if not isinstance(texto, str): return ""
+    if not isinstance(texto, str):
+        return ""
     reps = {'ç':'c', 'ã':'a', 'õ':'o', 'á':'a', 'é':'e', 'í':'i', 'ó':'o', 'ú':'u', 
             'ê':'e', 'â':'a', 'ô':'o', 'Ç':'C', 'Ã':'A', 'Õ':'O', 'Á':'A', 'É':'E', 'Í':'I', 'Ó':'O', 'Ú':'U'}
     for c, r in reps.items():
@@ -21,7 +22,7 @@ def text_pdf(texto):
     return texto
 
 # =====================================================================
-# 🧮 1. LÓGICA DE CÁLCULO
+# LOGICA DE CALCULO
 # =====================================================================
 def calcular_sistema_representacional(linha):
     colunas_visual = ["Eu tomo decisões importantes baseados em: [o que me parece melhor]", "Durante uma discussão eu sou mais influenciado por: [se eu posso ou não ver o argumento da outra pessoa]", "Eu comunico mais facilmente o que se passa comigo: [do modo como me visto e aparento]", "É muito fácil para mim: [escolher as combinações de cores mais ricas e atraentes]", "Eu me percebo assim: [eu respondo fortemente às cores e à aparência de uma sala]"]
@@ -34,8 +35,11 @@ def calcular_sistema_representacional(linha):
     c = sum([pd.to_numeric(linha.get(col, 0), errors='coerce') for col in colunas_cinestesico])
     d = sum([pd.to_numeric(linha.get(col, 0), errors='coerce') for col in colunas_digital])
     
-    v = v if pd.notna(v) else 0; a = a if pd.notna(a) else 0
-    c = c if pd.notna(c) else 0; d = d if pd.notna(d) else 0
+    v = v if pd.notna(v) else 0
+    a = a if pd.notna(a) else 0
+    c = c if pd.notna(c) else 0
+    d = d if pd.notna(d) else 0
+    
     total = v + a + c + d
     if total > 0:
         return {"Visual": round((v/total)*100, 1), "Auditivo": round((a/total)*100, 1), 
@@ -86,7 +90,7 @@ def calcular_perfil_animais(linha):
     return {"Águia": 0, "Gato": 0, "Lobo": 0, "Tubarão": 0}
 
 # =====================================================================
-# 📄 2. CLASSE GERADORA DO PDF (Design Consultoria Premium)
+# CLASSE GERADORA DO PDF
 # =====================================================================
 class PDF(FPDF):
     def header(self):
@@ -117,7 +121,7 @@ class PDF(FPDF):
         self.ln(2)
 
 # =====================================================================
-# 🧠 Dicionários de Inteligência de Texto
+# DICIONARIOS DE INTELIGENCIA DE TEXTO
 # =====================================================================
 def texto_animal(animal, perc):
     if animal == "Gato":
@@ -134,29 +138,35 @@ def texto_animal(animal, perc):
         else: return "Preferência por processos definidos e estruturados. Mostra menor foco na inovação disruptiva e maior conforto no que já está validado."
 
 # =====================================================================
-# ⚙️ 3. FUNÇÃO PRINCIPAL
+# FUNCAO PRINCIPAL
 # =====================================================================
 def gerar_pdf(nome_busca):
     url_csv = "https://docs.google.com/spreadsheets/d/1cz6O2iSync1c2E-lNGmEsgwMBrOgB2DHWz02A-y2g1Y/export?format=csv"
-    try: df = pd.read_csv(url_csv)
-    except Exception as e: return f"Erro ao ler a planilha: {e}"
+    try: 
+        df = pd.read_csv(url_csv)
+    except Exception as e: 
+        return f"Erro ao ler a planilha: {e}"
     
     cabecalhos = [str(c).lower().strip() for c in df.columns]
     if not any("nome" in c for c in cabecalhos):
         for i, row in df.iterrows():
             vals = [str(val).lower().strip() for val in row.values]
             if "nome" in vals or "nome do candidato" in vals:
-                df.columns = row.values; df = df.iloc[i+1:].reset_index(drop=True); break
+                df.columns = row.values
+                df = df.iloc[i+1:].reset_index(drop=True)
+                break
                 
     col_nome = next((c for c in df.columns if "nome" in str(c).lower()), None)
-    if not col_nome: return "Erro: Coluna 'Nome' nao encontrada."
+    if not col_nome: 
+        return "Erro: Coluna 'Nome' nao encontrada."
 
     df = df.dropna(subset=[col_nome])
     busca_limpa = normalizar_busca(nome_busca)
     nomes_plan = df[col_nome].apply(normalizar_busca)
     df_cand = df[nomes_plan.str.contains(busca_limpa, na=False)]
     
-    if df_cand.empty: return f"Candidato '{nome_busca}' nao encontrado."
+    if df_cand.empty: 
+        return f"Candidato '{nome_busca}' nao encontrado."
     linha = df_cand.iloc[-1]
     
     nome_real = str(linha[col_nome]).strip()
@@ -164,7 +174,6 @@ def gerar_pdf(nome_busca):
     empresa = linha.get("Empresa", "Nao Informada")
     data_app = linha.get("Carimbo de data/hora", "Nao Informada")
     
-    # Cálculos
     animais = calcular_perfil_animais(linha)
     pnl = calcular_sistema_representacional(linha)
     
@@ -175,7 +184,6 @@ def gerar_pdf(nome_busca):
     t2_n, t2_v = animais_ord[1]
     pnl_top_n, pnl_top_v = pnl_ord[0]
     
-    # Lógica de Vagas e Veredicto
     v_low = str(vaga).lower()
     if any(k in v_low for k in ["contab", "financ", "fiscal", "lobo", "adm", "process", "ti", "suport", "auditor", "qualidad", "estoque", "logistica"]):
         tipo = "Processos/Operacional/Analítico"
@@ -201,20 +209,16 @@ def gerar_pdf(nome_busca):
     if se_encaixa:
         veredicto = "CONTRATAR"
         just_veredicto = f"O candidato apresenta excelente aderência à função, com destaque para características de {t1_n} e {t2_n}, que favorecem o desempenho em vagas de {tipo}."
-    elif t2_n in ["Tubarão", "Lobo", "Gato", "Águia"]: # Simplificação lógica
+    elif t2_n in ["Tubarão", "Lobo", "Gato", "Águia"]: 
         veredicto = "CONTRATAR COM RESSALVAS"
         just_veredicto = f"O perfil principal ({t1_n}) difere um pouco do esperado para {tipo}, mas o secundário ({t2_n}) equilibra. Exigirá acompanhamento nos primeiros meses."
     else:
         veredicto = "NÃO CONTRATAR"
         just_veredicto = "O perfil natural do candidato demonstra desalinhamento com as exigências rotineiras e comportamentais desta vaga específica."
 
-    # =====================================================================
-    # 🎨 GERAÇÃO DO PDF
-    # =====================================================================
     pdf = PDF()
     pdf.add_page()
     
-    # Cabeçalho Fixo
     pdf.set_font('Helvetica', 'B', 10)
     pdf.cell(0, 5, text_pdf(f"Candidato: {nome_real}"), ln=True)
     pdf.set_font('Helvetica', '', 10)
@@ -223,25 +227,21 @@ def gerar_pdf(nome_busca):
     pdf.cell(0, 5, text_pdf(f"Data e hora do preenchimento: {data_app}"), ln=True)
     pdf.ln(5)
 
-    # Introdução
     intro = (f"O candidato {nome_real} apresentou o seguinte resultado no teste de perfil comportamental: "
              f"{animais['Tubarão']}% Tubarão, {animais['Lobo']}% Lobo, {animais['Águia']}% Águia e {animais['Gato']}% Gato.\n\n"
              f"Ex.: O perfil {t1_n} teve {t1_v}% de aderência (predominante), seguido do perfil {t2_n} com {t2_v}% de aderência.")
     pdf.texto_normal(intro)
 
-    # Análise Comportamental
     pdf.titulo_secao("Análise do Perfil Comportamental")
     for animal in ["Tubarão", "Lobo", "Gato", "Águia"]:
         texto_dinamico = texto_animal(animal, animais[animal])
         pdf.texto_normal(f"- {animal} ({animais[animal]}%): {texto_dinamico}")
 
-    # Pontos Fortes e Fracos
     pdf.titulo_secao("Pontos Fortes e Fracos do candidato em relação à vaga")
     pdf.texto_normal(f"Considerando as exigências para o setor de {vaga} ({tipo}):\n")
     pdf.texto_normal(f"✔ Pontos Fortes: {fortes}")
     pdf.texto_normal(f"⚠ Pontos Fracos/Desenvolver: {fracos}")
 
-    # Perfil Representacional
     pdf.titulo_secao("Análise do Perfil Representacional")
     pdf.texto_normal(f"Resultados obtidos: {pnl['Visual']}% Visual, {pnl['Cinestésico']}% Cinestésico, {pnl['Auditivo']}% Auditivo e {pnl['Digital']}% Digital.")
     
@@ -252,15 +252,12 @@ def gerar_pdf(nome_busca):
     else: txt_pnl += "Indica forte capacidade de escuta e comunicação verbal. A melhor abordagem é o diálogo claro, feedbacks conversados e evitar dar ordens em locais muito ruidosos."
     pdf.texto_normal(txt_pnl)
 
-    # Adequação ao Cargo
     pdf.titulo_secao("Adequação ao Cargo")
     pdf.texto_normal(just_veredicto)
 
-    # Pontos de Atenção
     pdf.titulo_secao("Pontos de Atenção para a Gestão")
     pdf.texto_normal(f"Caso o candidato seja integrado, o gestor direto deve ter em atenção que o colaborador, por ter traços fortes de {t1_n}, responderá melhor a um modelo de liderança que respeite a sua natureza. Deverá ser feito um alinhamento claro das expectativas nas primeiras semanas, focando nos pontos fracos descritos acima para mitigar quebras de produtividade.")
 
-    # Conclusão
     pdf.titulo_secao("Conclusão do Parecer")
     pdf.texto_destaque(f"Recomendação Final: {veredicto}")
 
@@ -269,185 +266,4 @@ def gerar_pdf(nome_busca):
     return nome_ficheiro
 
 if __name__ == "__main__":
-    gerar_pdf("José Pedro")    total_respondido = 0
-    for pergunta, alternativas in gabarito_comportamental.items():
-        if pergunta in linha:
-            resposta_cand = str(linha.get(pergunta, "")).strip().lower()
-            for resp_chave, animal in alternativas.items():
-                if resp_chave.strip().lower() in resposta_cand:
-                    pontos[animal] += 1
-                    total_respondido += 1
-                    break
-    if total_respondido > 0:
-        return {animal: round((valor / total_respondido) * 100, 1) for animal, valor in pontos.items()}
-    return {"Águia": 0, "Gato": 0, "Lobo": 0, "Tubarão": 0}
-
-# =====================================================================
-# 📄 2. CLASSE GERADORA DO PDF (Design Executivo)
-# =====================================================================
-class PDF(FPDF):
-    def header(self):
-        self.set_font('Helvetica', 'B', 16)
-        self.set_text_color(43, 92, 143) # Azul Implantta
-        self.cell(0, 10, 'IMPLANTTA CONSULTORIA', ln=True, align='C')
-        self.set_font('Helvetica', 'B', 12)
-        self.set_text_color(100, 100, 100)
-        self.cell(0, 8, 'RELATORIO DE ENGENHARIA DE PERFIL - SINTESE EXECUTIVA', ln=True, align='C')
-        self.line(10, 30, 200, 30)
-        self.ln(10)
-
-    def chapter_title(self, title):
-        self.set_font('Helvetica', 'B', 12)
-        self.set_text_color(43, 92, 143)
-        self.cell(0, 10, title, ln=True)
-        self.ln(2)
-
-    def chapter_body(self, text):
-        self.set_font('Helvetica', '', 11)
-        self.set_text_color(0, 0, 0)
-        text = text.replace('ç', 'c').replace('ã', 'a').replace('õ', 'o').replace('á', 'a').replace('é', 'e').replace('í', 'i').replace('ó', 'o').replace('ú', 'u').replace('ê', 'e')
-        self.multi_cell(0, 6, text)
-        self.ln(5)
-
-# =====================================================================
-# ⚙️ 3. FUNÇÃO PRINCIPAL (Cria o PDF para um candidato específico)
-# =====================================================================
-def gerar_pdf(nome_busca):
-    print(f"A procurar candidato: {nome_busca}...")
-    
-    url_csv = "https://docs.google.com/spreadsheets/d/1cz6O2iSync1c2E-lNGmEsgwMBrOgB2DHWz02A-y2g1Y/export?format=csv"
-    
-    try:
-        df = pd.read_csv(url_csv)
-    except Exception as e:
-        return f"Erro ao ler a planilha: {e}"
-    
-    cabecalhos_atuais = [str(c).lower().strip() for c in df.columns]
-    if not any("nome" in c for c in cabecalhos_atuais):
-        for i, row in df.iterrows():
-            valores_linha = [str(val).lower().strip() for val in row.values]
-            if "nome" in valores_linha or "nome do candidato" in valores_linha:
-                df.columns = row.values 
-                df = df.iloc[i+1:].reset_index(drop=True) 
-                break
-                
-    df = df.loc[:, df.columns.notna()]
-    
-    coluna_nome = None
-    for col in df.columns:
-        if "nome" in str(col).lower():
-            coluna_nome = col
-            break
-            
-    if not coluna_nome:
-        return "Erro: Coluna 'Nome' nao encontrada na planilha."
-
-    df = df.dropna(subset=[coluna_nome])
-    
-    # 🚨 A NOVA LÓGICA DE PROCURA BLINDADA (Ignora Acentos e Maiúsculas)
-    busca_limpa = normalizar_texto(nome_busca)
-    nomes_na_planilha = df[coluna_nome].apply(normalizar_texto)
-    
-    # Filtra a planilha
-    df_cand = df[nomes_na_planilha.str.contains(busca_limpa, na=False)]
-    
-    if df_cand.empty:
-        return f"Candidato '{nome_busca}' nao encontrado. Certifique-se de escrever pelo menos uma parte do nome."
-    
-    linha_cand = df_cand.iloc[-1] # Pega a resposta mais recente caso haja duplicados
-    
-    nome_real = str(linha_cand[coluna_nome]).strip()
-    vaga_alvo = linha_cand.get("Setor", "Nao Informado")
-    empresa_alvo = linha_cand.get("Empresa", "Nao Informada")
-    data_teste = linha_cand.get("Carimbo de data/hora", "Nao Informada")
-    
-    # Fazer os cálculos
-    valores_animais = calcular_perfil_animais(linha_cand)
-    valores_canais = calcular_sistema_representacional(linha_cand)
-    
-    perfis_ordenados = sorted(valores_animais.items(), key=lambda x: x[1], reverse=True)
-    top1_nome, top1_valor = perfis_ordenados[0]
-    top2_nome, top2_valor = perfis_ordenados[1]
-    
-    predominante_pnl = max(valores_canais, key=valores_canais.get)
-    
-    # Lógica da Vaga
-    vaga_lower = str(vaga_alvo).lower()
-    if any(k in vaga_lower for k in ["contab", "financ", "fiscal", "lobo", "adm", "process", "ti", "suport", "auditor", "qualidad", "estoque", "logistica"]):
-        tipo_vaga = "Processos/Contabil/Analitico"
-        perfis_ideais = ["Lobo", "Tubarao"]
-        is_general = False
-    elif any(k in vaga_lower for k in ["vend", "comercial", "geren", "diretor", "lider", "meta", "tubarao", "expansao", "negocio"]):
-        tipo_vaga = "Comercial/Lideranca/Execucao"
-        perfis_ideais = ["Tubarao", "Aguia"]
-        is_general = False
-    elif any(k in vaga_lower for k in ["rh", "human", "atend", "gato", "client", "relacionamento", "cs", "sucesso", "pessoal", "dp", "psico", "recep"]):
-        tipo_vaga = "Pessoas/Atendimento/Suporte"
-        perfis_ideais = ["Gato", "Aguia"]
-        is_general = False
-    else:
-        tipo_vaga = "Funcao Dinamica / Nao Especifica"
-        perfis_ideais = ["(Depende do escopo da vaga)"]
-        is_general = True
-        
-    convergente = (top1_nome in perfis_ideais)
-    
-    # =====================================================================
-    # 🎨 MONTAR O ARQUIVO PDF
-    # =====================================================================
-    pdf = PDF()
-    pdf.add_page()
-    
-    pdf.set_font('Helvetica', 'B', 11)
-    pdf.cell(0, 6, f"Candidato: {nome_real}", ln=True)
-    pdf.set_font('Helvetica', '', 11)
-    pdf.cell(0, 6, f"Vaga/Funcao: {vaga_alvo} | Empresa: {empresa_alvo}", ln=True)
-    pdf.cell(0, 6, f"Data da Aplicacao: {data_teste}", ln=True)
-    pdf.ln(5)
-    
-    pdf.chapter_title("1. PERFIL COMPORTAMENTAL PREDOMINANTE")
-    texto_animais = (
-        f"Perfil Primario: {top1_nome} ({top1_valor}%)\n"
-        f"Perfil Secundario: {top2_nome} ({top2_valor}%)\n\n"
-        f"Parecer Analitico:\nDistribuicao com predominancia de {top1_nome}, com suporte de {top2_nome}."
-    )
-    pdf.chapter_body(texto_animais)
-    
-    pdf.chapter_title("2. ALINHAMENTO COM A FUNCAO (VAGA)")
-    if is_general:
-        veredicto = "AVALIACAO DO GESTOR"
-        justificativa = "O titulo da vaga nao tem um perfil engessado. Avalie as forcas do candidato."
-    elif convergente:
-        veredicto = "CONTRATAR"
-        justificativa = "Alta aderencia comportamental com o escopo da vaga."
-    elif top2_nome in perfis_ideais:
-        veredicto = "AVALIAR COM RESSALVAS"
-        justificativa = "O perfil principal difere do esperado, mas o secundario equilibra."
-    else:
-        veredicto = "DESALINHADO A VAGA"
-        justificativa = "Desalinhamento natural com as rotinas diarias da funcao."
-        
-    texto_vaga = (
-        f"Engenharia do Cargo: {tipo_vaga}\n"
-        f"Perfis Ideais: {', '.join(perfis_ideais)}\n\n"
-        f"VEREDICTO: {veredicto}\n"
-        f"Justificativa: {justificativa}"
-    )
-    pdf.chapter_body(texto_vaga)
-    
-    pdf.chapter_title("3. SISTEMA REPRESENTACIONAL (PNL)")
-    texto_pnl = ""
-    for canal, valor in valores_canais.items():
-        marcador = " (Predominante)" if canal == predominante_pnl else ""
-        texto_pnl += f"- {canal}: {valor}% {marcador}\n"
-        
-    texto_pnl += f"\nManual de Relacionamento:\nO candidato possui o canal {predominante_pnl} mais elevado. Adapte a comunicacao para este canal para maior eficacia na lideranca."
-    
-    pdf.chapter_body(texto_pnl)
-    
-    nome_ficheiro = f"Parecer_{normalizar_texto(nome_real).replace(' ', '_')}.pdf"
-    pdf.output(nome_ficheiro)
-    return nome_ficheiro
-
-if __name__ == "__main__":
-    gerar_pdf("José Pedro")
+    print(gerar_pdf("José Pedro"))
