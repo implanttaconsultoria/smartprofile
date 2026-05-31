@@ -4,7 +4,7 @@ import unicodedata
 import os
 
 # =====================================================================
-# 🛡️ 1. FUNÇÕES DE LIMPEZA E GÊNERO
+# 🛡️ 1. FUNÇÕES DE LIMPEZA, FORMATAÇÃO E GÊNERO
 # =====================================================================
 def normalizar_busca(texto):
     if pd.isna(texto): return ""
@@ -16,6 +16,12 @@ def text_pdf(texto):
     reps = {'✔': '[+]', '⚠': '[!]', '–': '-', '—': '-', '“': '"', '”': '"', '\u200b': '', '\ufeff': '', '\xa0': ' '}
     for c, r in reps.items(): texto = texto.replace(c, r)
     return texto.encode('latin-1', 'ignore').decode('latin-1')
+
+def formatar_nome_proprio(texto):
+    if pd.isna(texto): return ""
+    excecoes = ['de', 'da', 'do', 'das', 'dos', 'e']
+    palavras = str(texto).strip().lower().split()
+    return " ".join([p.capitalize() if p not in excecoes else p for p in palavras])
 
 def definir_genero(nome):
     primeiro_nome = normalizar_busca(nome.split()[0])
@@ -135,8 +141,6 @@ class PDF(FPDF):
 # =====================================================================
 def categorizar_vaga(vaga):
     v_low = normalizar_busca(vaga)
-    
-    # Mapeamento expandido (ignora acentos)
     cat1_keys = ["contab", "financ", "fiscal", "lobo", "adm", "process", "ti", "suport", "auditor", "qualidad", "estoque", "logistic", "motorist", "operacion", "faturament", "caixa"]
     cat2_keys = ["vend", "comercial", "geren", "diretor", "lider", "meta", "tubarao", "expansao", "negocio", "executiv", "corretor"]
     cat3_keys = ["rh", "human", "atend", "gato", "client", "relacionamento", "cs", "sucesso", "pessoal", "dp", "psico", "recep", "secret"]
@@ -230,12 +234,12 @@ def gerar_pdf(nome_busca):
     if df_cand.empty: return f"Candidato '{nome_busca}' não encontrado."
     linha = df_cand.iloc[-1]
     
-    nome_real = str(linha[col_nome]).strip().title()
-    vaga = str(linha.get("Setor", "Não Informado")).strip().title()
-    empresa = str(linha.get("Empresa", "Não Informada")).title()
+    # 🧠 Aqui entra a nova formatação impecável:
+    nome_real = formatar_nome_proprio(linha[col_nome])
+    vaga = formatar_nome_proprio(linha.get("Setor", "Não Informado"))
+    empresa = formatar_nome_proprio(linha.get("Empresa", "Não Informada"))
     data_app = str(linha.get("Carimbo de data/hora", "Não Informada"))
     
-    # 🧠 Inteligência
     gen = obter_artigos(nome_real)
     animais = calcular_perfil_animais(linha)
     pnl = calcular_sistema_representacional(linha)
@@ -247,12 +251,10 @@ def gerar_pdf(nome_busca):
     t2_n, t2_v = animais_ord[1]
     pnl_top_n, pnl_top_v = pnl_ord[0]
     
-    # 🧠 MATRIZ RIGOROSA DE VEREDICTO E ATIVIDADES
     cat_info = categorizar_vaga(vaga)
     perfis_ideais = cat_info["ideais"]
     atividades_desc = cat_info["atividades"]
 
-    # O Filtro de Contratação
     if t1_n in perfis_ideais:
         veredicto = "CONTRATAR"
         just_veredicto = f"{gen['O_mai']} {gen['candidato']} apresenta excelente aderência, pois o perfil predominante ({t1_n}) está diretamente alinhado às exigências necessárias para as {atividades_desc}."
@@ -263,7 +265,6 @@ def gerar_pdf(nome_busca):
         veredicto = "NÃO CONTRATAR"
         just_veredicto = f"O perfil natural d{gen['o_min']} {gen['candidato']} ({t1_n} primário e {t2_n} secundário) demonstra forte desalinhamento com as exigências comportamentais para as {atividades_desc}."
 
-    # 📄 CONSTRUÇÃO DO PDF
     pdf = PDF()
     pdf.add_page()
     
@@ -319,4 +320,4 @@ def gerar_pdf(nome_busca):
     return nome_ficheiro
 
 if __name__ == "__main__":
-    print(gerar_pdf("José Pedro"))
+    print(gerar_pdf("Aparecida Oliveira do Amaral"))
