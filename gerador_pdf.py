@@ -99,6 +99,15 @@ def calcular_perfil_animais(linha):
 # =====================================================================
 class PDF(FPDF):
     def header(self):
+        # Tenta inserir a logomarca da empresa se o ficheiro existir
+        try:
+            if os.path.exists('logo.png'):
+                self.image('logo.png', 10, 8, 30)
+            elif os.path.exists('logo.jpg'):
+                self.image('logo.jpg', 10, 8, 30)
+        except Exception:
+            pass # Se a imagem não for válida, o código ignora em silêncio
+            
         self.set_font('Helvetica', 'B', 16)
         self.set_text_color(43, 92, 143)
         self.cell(0, 10, text_pdf('IMPLANTTA CONSULTORIA'), ln=True, align='C')
@@ -109,7 +118,12 @@ class PDF(FPDF):
         self.ln(10)
 
     def titulo_secao(self, title):
-        self.ln(3)
+        # Lógica de Paginação (Evita que o título fique isolado no final da página)
+        if self.get_y() > 250:  
+            self.add_page()
+        else:
+            self.ln(3)
+            
         self.set_font('Helvetica', 'B', 11)
         self.set_text_color(43, 92, 143)
         self.cell(0, 8, text_pdf(title), ln=True)
@@ -131,7 +145,7 @@ class PDF(FPDF):
 def texto_animal(animal, perc):
     if animal == "Gato":
         if perc >= 25: return "Indica uma pessoa colaborativa, empática e prestativa. Facilidade para trabalhar em equipe, cordialidade e disposição para manter um ambiente harmonioso."
-        else: return "Menor foco no relacionamento interpessoal constante. Pode apresentar um perfil mais voltado para a tarefa do que para o acolhimento da equipa."
+        else: return "Menor foco no relacionamento interpessoal constante. Pode apresentar um perfil mais voltado para a tarefa do que para o acolhimento da equipe."
     elif animal == "Lobo":
         if perc >= 25: return "Demonstra excelente atenção aos detalhes, respeito a regras e procedimentos. Boa capacidade de organização e constância com rotinas."
         else: return "Perfil mais flexível, com menor apego a regras rígidas. Pode preferir ambientes onde haja menos microgestão e maior liberdade operacional."
@@ -174,7 +188,6 @@ def gerar_pdf(nome_busca):
         return f"Candidato '{nome_busca}' não encontrado."
     linha = df_cand.iloc[-1]
     
-    # Tratamento de capitalização para exibir bonito no PDF (Nome, Empresa, Vaga)
     nome_real = str(linha[col_nome]).strip().title()
     vaga = str(linha.get("Setor", "Não Informado")).title()
     empresa = str(linha.get("Empresa", "Não Informada")).title()
@@ -203,8 +216,8 @@ def gerar_pdf(nome_busca):
         se_encaixa = (t1_n in ["Tubarão", "Águia", "Gato"])
     elif any(k in v_low for k in ["rh", "human", "atend", "gato", "client", "relacionamento", "cs", "sucesso", "pessoal", "dp", "psico", "recep"]):
         tipo = "Pessoas/Atendimento/Suporte"
-        fortes = "Escuta ativa, empatia, mediação de conflitos e forte trabalho em equipa."
-        fracos = "Dificuldade em tomar decisões frias que prejudiquem o clima da equipa."
+        fortes = "Escuta ativa, empatia, mediação de conflitos e forte trabalho em equipe."
+        fracos = "Dificuldade em tomar decisões frias que prejudiquem o clima da equipe."
         se_encaixa = (t1_n in ["Gato", "Águia", "Lobo"])
     else:
         tipo = "Função Dinâmica / Geral"
@@ -252,7 +265,7 @@ def gerar_pdf(nome_busca):
     pdf.texto_normal(f"Resultados obtidos: {pnl['Visual']}% Visual, {pnl['Cinestésico']}% Cinestésico, {pnl['Auditivo']}% Auditivo e {pnl['Digital']}% Digital.")
     
     txt_pnl = f"Predominância do perfil {pnl_top_n} ({pnl_top_v}%). "
-    if pnl_top_n == "Digital": txt_pnl += "Indica forte tendência a processar informações de forma lógica, analisar procedimentos com racionalidade e valorizar precisão. A melhor abordagem é fornecer instruções claras e baseadas em factos."
+    if pnl_top_n == "Digital": txt_pnl += "Indica forte tendência a processar informações de forma lógica, analisar procedimentos com racionalidade e valorizar precisão. A melhor abordagem é fornecer instruções claras e baseadas em fatos."
     elif pnl_top_n == "Cinestésico": txt_pnl += "Indica facilidade com atividades práticas e aprendizagem por execução. A melhor abordagem é o treino on-the-job, valorizando o lado humano e o acolhimento."
     elif pnl_top_n == "Visual": txt_pnl += "Indica rapidez mental e aprendizagem por observação e mapas visuais. A melhor abordagem é manter contato visual, usar esquemas e mostrar o 'cenário geral'."
     else: txt_pnl += "Indica forte capacidade de escuta e comunicação verbal. A melhor abordagem é o diálogo claro, feedbacks conversados e evitar dar ordens em locais muito ruidosos."
