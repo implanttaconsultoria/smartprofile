@@ -4,7 +4,7 @@ import unicodedata
 import os
 
 # =====================================================================
-# 🛡️ FUNÇÕES DE LIMPEZA (BLINDAGEM COM SUPORTE A ACENTOS)
+# 🛡️ 1. FUNÇÕES DE LIMPEZA E GÊNERO (NOVIDADE)
 # =====================================================================
 def normalizar_busca(texto):
     if pd.isna(texto):
@@ -15,19 +15,33 @@ def normalizar_busca(texto):
 def text_pdf(texto):
     if not isinstance(texto, str):
         return ""
-    # 1. Substitui símbolos problemáticos e remove espaços invisíveis
     reps = {
         '✔': '[+]', '⚠': '[!]', '–': '-', '—': '-', 
         '“': '"', '”': '"', '\u200b': '', '\ufeff': '', '\xa0': ' '
     }
     for c, r in reps.items():
         texto = texto.replace(c, r)
-    
-    # 2. A MAGIA: Mantém os acentos (latin-1) e ignora apenas o que a fonte não suporta (emojis)
     return texto.encode('latin-1', 'ignore').decode('latin-1')
 
+def definir_genero(nome):
+    primeiro_nome = normalizar_busca(nome.split()[0])
+    masculinos_a = ['luca', 'noa', 'noah', 'joshua', 'jonatas', 'messias', 'ozias', 'matias', 'zacarias', 'andrea', 'batista']
+    femininos_excecoes = ['miriam', 'raquel', 'ester', 'ruth', 'elisabeth', 'carmen', 'iris', 'lais', 'beatriz', 'tais', 'thais', 'aline', 'simone', 'eliane', 'viviane', 'lilian', 'suelen', 'karen', 'ingrid', 'ellen', 'helen', 'cleide', 'meire', 'irene', 'shirley', 'rose', 'ariadne']
+    
+    if primeiro_nome in masculinos_a:
+        return "M"
+    if primeiro_nome in femininos_excecoes or primeiro_nome.endswith('a') or primeiro_nome.endswith('y') or primeiro_nome.endswith('ie') or primeiro_nome.endswith('elly'):
+        return "F"
+    return "M"
+
+def obter_artigos(nome):
+    if definir_genero(nome) == "F":
+        return {"o_min": "a", "O_mai": "A", "candidato": "candidata", "integrado": "integrada", "o_colaborador": "a colaboradora"}
+    else:
+        return {"o_min": "o", "O_mai": "O", "candidato": "candidato", "integrado": "integrado", "o_colaborador": "o colaborador"}
+
 # =====================================================================
-# 🧮 LÓGICA DE CÁLCULO
+# 🧮 2. LÓGICA DE CÁLCULO
 # =====================================================================
 def calcular_sistema_representacional(linha):
     colunas_visual = ["Eu tomo decisões importantes baseados em: [o que me parece melhor]", "Durante uma discussão eu sou mais influenciado por: [se eu posso ou não ver o argumento da outra pessoa]", "Eu comunico mais facilmente o que se passa comigo: [do modo como me visto e aparento]", "É muito fácil para mim: [escolher as combinações de cores mais ricas e atraentes]", "Eu me percebo assim: [eu respondo fortemente às cores e à aparência de uma sala]"]
@@ -40,15 +54,10 @@ def calcular_sistema_representacional(linha):
     c = sum([pd.to_numeric(linha.get(col, 0), errors='coerce') for col in colunas_cinestesico])
     d = sum([pd.to_numeric(linha.get(col, 0), errors='coerce') for col in colunas_digital])
     
-    v = v if pd.notna(v) else 0
-    a = a if pd.notna(a) else 0
-    c = c if pd.notna(c) else 0
-    d = d if pd.notna(d) else 0
-    
+    v = v if pd.notna(v) else 0; a = a if pd.notna(a) else 0
+    c = c if pd.notna(c) else 0; d = d if pd.notna(d) else 0
     total = v + a + c + d
-    if total > 0:
-        return {"Visual": round((v/total)*100, 1), "Auditivo": round((a/total)*100, 1), 
-                "Cinestésico": round((c/total)*100, 1), "Digital": round((d/total)*100, 1)}
+    if total > 0: return {"Visual": round((v/total)*100, 1), "Auditivo": round((a/total)*100, 1), "Cinestésico": round((c/total)*100, 1), "Digital": round((d/total)*100, 1)}
     return {"Visual": 25.0, "Auditivo": 25.0, "Cinestésico": 25.0, "Digital": 25.0}
 
 gabarito_comportamental = {
@@ -90,21 +99,17 @@ def calcular_perfil_animais(linha):
                     pontos[animal] += 1
                     total += 1
                     break
-    if total > 0:
-        return {a: round((v/total)*100, 1) for a, v in pontos.items()}
+    if total > 0: return {a: round((v/total)*100, 1) for a, v in pontos.items()}
     return {"Águia": 0, "Gato": 0, "Lobo": 0, "Tubarão": 0}
 
 # =====================================================================
-# 📄 CLASSE GERADORA DO PDF
+# 📄 3. CLASSE GERADORA DO PDF
 # =====================================================================
 class PDF(FPDF):
     def header(self):
-        # Limita a altura (h=18) para a logomarca não cortar a linha dos 30mm
         try:
-            if os.path.exists('logo.png'):
-                self.image('logo.png', x=10, y=8, h=18)
-            elif os.path.exists('logo.jpg'):
-                self.image('logo.jpg', x=10, y=8, h=18)
+            if os.path.exists('logo.png'): self.image('logo.png', x=10, y=8, h=18)
+            elif os.path.exists('logo.jpg'): self.image('logo.jpg', x=10, y=8, h=18)
         except Exception:
             pass 
             
@@ -118,12 +123,10 @@ class PDF(FPDF):
         self.ln(10)
 
     def titulo_secao(self, title):
-        # Lógica de Paginação (Evita que o título fique isolado no final da página)
         if self.get_y() > 250:  
             self.add_page()
         else:
             self.ln(3)
-            
         self.set_font('Helvetica', 'B', 11)
         self.set_text_color(43, 92, 143)
         self.cell(0, 8, text_pdf(title), ln=True)
@@ -140,7 +143,7 @@ class PDF(FPDF):
         self.ln(2)
 
 # =====================================================================
-# 🧠 DICIONÁRIOS DE INTELIGÊNCIA DE TEXTO
+# 🧠 4. DICIONÁRIOS DE INTELIGÊNCIA DE TEXTO
 # =====================================================================
 def texto_animal(animal, perc):
     if animal == "Gato":
@@ -156,8 +159,18 @@ def texto_animal(animal, perc):
         if perc >= 25: return "Sugere grande capacidade criativa, visão de futuro, facilidade em inovar e propor melhorias para processos engessados."
         else: return "Preferência por processos definidos e estruturados. Mostra menor foco na inovação disruptiva e maior conforto no que já está validado."
 
+def texto_atencao_gestao(animal, gen):
+    if animal == "Tubarão":
+        return f"Recomenda-se uma liderança baseada em metas claras e autonomia, evitando a microgestão. O gestor deve monitorar possíveis atritos com a equipe devido ao forte senso de urgência d{gen['o_min']} {gen['candidato']}, garantindo um ambiente de respeito mútuo e direcionando essa energia para resultados táticos."
+    elif animal == "Lobo":
+        return f"A gestão precisa fornecer um ambiente estruturado e com regras bem definidas. Mudanças repentinas de escopo podem gerar desconforto. O líder ideal deve comunicar alterações com antecedência, valorizar a organização e oferecer orientações lógicas e detalhadas para {gen['o_colaborador']}."
+    elif animal == "Águia":
+        return f"A gestão deve evitar rotinas excessivamente burocráticas ou repetitivas, que podem causar desmotivação. É recomendável oferecer espaço para ideias e inovações. O líder deve atuar como um facilitador, guiando o foco d{gen['o_min']} {gen['candidato']} para garantir que a sua criatividade não comprometa os prazos estipulados."
+    else: # Gato
+        return f"A gestão deve priorizar feedbacks humanizados e um clima organizacional harmonioso. {gen['O_mai']} {gen['candidato']} renderá melhor sob uma liderança acolhedora. O líder deve ficar atento para que o foco natural d{gen['o_min']} {gen['candidato']} em relacionamentos e colaboração não ofusque a entrega objetiva das tarefas operacionais."
+
 # =====================================================================
-# ⚙️ FUNÇÃO PRINCIPAL
+# ⚙️ 5. FUNÇÃO PRINCIPAL
 # =====================================================================
 def gerar_pdf(nome_busca):
     url_csv = "https://docs.google.com/spreadsheets/d/1cz6O2iSync1c2E-lNGmEsgwMBrOgB2DHWz02A-y2g1Y/export?format=csv"
@@ -193,6 +206,9 @@ def gerar_pdf(nome_busca):
     empresa = str(linha.get("Empresa", "Não Informada")).title()
     data_app = str(linha.get("Carimbo de data/hora", "Não Informada"))
     
+    # 🧠 Chama o Cérebro de Gênero
+    gen = obter_artigos(nome_real)
+
     animais = calcular_perfil_animais(linha)
     pnl = calcular_sistema_representacional(linha)
     
@@ -227,26 +243,26 @@ def gerar_pdf(nome_busca):
 
     if se_encaixa:
         veredicto = "CONTRATAR"
-        just_veredicto = f"O candidato apresenta excelente aderência à função, com destaque para características de {t1_n} e {t2_n}, que favorecem o desempenho em vagas de {tipo}."
+        just_veredicto = f"{gen['O_mai']} {gen['candidato']} apresenta excelente aderência à função, com destaque para características de {t1_n} e {t2_n}, que favorecem o desempenho em vagas de {tipo}."
     elif t2_n in ["Tubarão", "Lobo", "Gato", "Águia"]: 
         veredicto = "CONTRATAR COM RESSALVAS"
         just_veredicto = f"O perfil principal ({t1_n}) difere um pouco do esperado para {tipo}, mas o secundário ({t2_n}) equilibra. Exigirá acompanhamento nos primeiros meses."
     else:
         veredicto = "NÃO CONTRATAR"
-        just_veredicto = "O perfil natural do candidato demonstra desalinhamento com as exigências rotineiras e comportamentais desta vaga específica."
+        just_veredicto = f"O perfil natural d{gen['o_min']} {gen['candidato']} demonstra desalinhamento com as exigências rotineiras e comportamentais desta vaga específica."
 
     pdf = PDF()
     pdf.add_page()
     
     pdf.set_font('Helvetica', 'B', 10)
-    pdf.cell(0, 5, text_pdf(f"Candidato: {nome_real}"), ln=True)
+    pdf.cell(0, 5, text_pdf(f"Candidat{gen['o_min']}: {nome_real}"), ln=True)
     pdf.set_font('Helvetica', '', 10)
     pdf.cell(0, 5, text_pdf(f"Cargo Avaliado: {vaga}"), ln=True)
     pdf.cell(0, 5, text_pdf(f"Empresa: {empresa}"), ln=True)
     pdf.cell(0, 5, text_pdf(f"Data e hora do preenchimento: {data_app}"), ln=True)
     pdf.ln(5)
 
-    intro = (f"O candidato {nome_real} apresentou o seguinte resultado no teste de perfil comportamental: "
+    intro = (f"{gen['O_mai']} {gen['candidato']} {nome_real} apresentou o seguinte resultado no teste de perfil comportamental: "
              f"{animais['Tubarão']}% Tubarão, {animais['Lobo']}% Lobo, {animais['Águia']}% Águia e {animais['Gato']}% Gato.\n\n"
              f"O perfil {t1_n} teve {t1_v}% de aderência (predominante), seguido do perfil {t2_n} com {t2_v}% de aderência.")
     pdf.texto_normal(intro)
@@ -256,7 +272,7 @@ def gerar_pdf(nome_busca):
         texto_dinamico = texto_animal(animal, animais[animal])
         pdf.texto_normal(f"- {animal} ({animais[animal]}%): {texto_dinamico}")
 
-    pdf.titulo_secao("Pontos Fortes e Fracos do candidato em relação à vaga")
+    pdf.titulo_secao("Pontos Fortes e Fracos em relação à vaga")
     pdf.texto_normal(f"Considerando as exigências para o setor de {vaga} ({tipo}):\n")
     pdf.texto_normal(f"[+] Pontos Fortes: {fortes}")
     pdf.texto_normal(f"[!] Pontos Fracos/Desenvolver: {fracos}")
@@ -275,7 +291,8 @@ def gerar_pdf(nome_busca):
     pdf.texto_normal(just_veredicto)
 
     pdf.titulo_secao("Pontos de Atenção para a Gestão")
-    pdf.texto_normal(f"Caso o candidato seja integrado, o gestor direto deve ter em atenção que o colaborador, por ter traços fortes de {t1_n}, responderá melhor a um modelo de liderança que respeite a sua natureza. Deverá ser feito um alinhamento claro das expectativas nas primeiras semanas, focando nos pontos fracos descritos acima para mitigar quebras de produtividade.")
+    txt_gestao = f"Caso {gen['o_min']} {gen['candidato']} seja {gen['integrado']}, o gestor direto deve ter em atenção que {gen['o_colaborador']}, por ter traços fortes de {t1_n}, necessitará de uma abordagem alinhada ao seu perfil natural.\n\n" + texto_atencao_gestao(t1_n, gen)
+    pdf.texto_normal(txt_gestao)
 
     pdf.titulo_secao("Conclusão do Parecer")
     pdf.texto_destaque(f"Recomendação Final: {veredicto}")
