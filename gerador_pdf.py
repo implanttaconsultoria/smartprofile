@@ -20,7 +20,7 @@ def text_pdf(texto):
 def definir_genero(nome):
     primeiro_nome = normalizar_busca(nome.split()[0])
     masculinos_a = ['luca', 'noa', 'noah', 'joshua', 'jonatas', 'messias', 'ozias', 'matias', 'zacarias', 'andrea', 'batista']
-    femininos_excecoes = ['miriam', 'raquel', 'ester', 'ruth', 'elisabeth', 'carmen', 'iris', 'lais', 'beatriz', 'tais', 'thais', 'aline', 'simone', 'eliane', 'viviane', 'lilian', 'suelen', 'karen', 'ingrid', 'ellen', 'helen', 'cleide', 'meire', 'irene', 'shirley', 'rose', 'ariadne']
+    femininos_excecoes = ['miriam', 'raquel', 'ester', 'ruth', 'elisabeth', 'carmen', 'iris', 'lais', 'beatriz', 'tais', 'thais', 'aline', 'simone', 'eliane', 'viviane', 'lilian', 'suelen', 'karen', 'ingrid', 'ellen', 'helen', 'cleide', 'meire', 'irene', 'shirley', 'rose', 'ariadne', 'thaina']
     
     if primeiro_nome in masculinos_a: return "M"
     if primeiro_nome in femininos_excecoes or primeiro_nome.endswith('a') or primeiro_nome.endswith('y') or primeiro_nome.endswith('ie') or primeiro_nome.endswith('elly'): return "F"
@@ -133,6 +133,35 @@ class PDF(FPDF):
 # =====================================================================
 # 🧠 4. DICIONÁRIOS DE INTELIGÊNCIA DE TEXTO E VAGAS
 # =====================================================================
+def categorizar_vaga(vaga):
+    v_low = normalizar_busca(vaga)
+    
+    # Mapeamento expandido (ignora acentos)
+    cat1_keys = ["contab", "financ", "fiscal", "lobo", "adm", "process", "ti", "suport", "auditor", "qualidad", "estoque", "logistic", "motorist", "operacion", "faturament", "caixa"]
+    cat2_keys = ["vend", "comercial", "geren", "diretor", "lider", "meta", "tubarao", "expansao", "negocio", "executiv", "corretor"]
+    cat3_keys = ["rh", "human", "atend", "gato", "client", "relacionamento", "cs", "sucesso", "pessoal", "dp", "psico", "recep", "secret"]
+    
+    if any(k in v_low for k in cat1_keys):
+        return {
+            "atividades": "atividades que exigem alto nível de foco, precisão, organização metódica, análise de dados e cumprimento rigoroso de regras ou rotinas",
+            "ideais": ["Lobo", "Tubarão"]
+        }
+    elif any(k in v_low for k in cat2_keys):
+        return {
+            "atividades": "atividades focadas em alcance de metas, tomada de decisão rápida, negociação, persuasão e resolução de problemas sob pressão",
+            "ideais": ["Tubarão", "Águia"]
+        }
+    elif any(k in v_low for k in cat3_keys):
+        return {
+            "atividades": "atividades que envolvem forte interação humana, escuta ativa, mediação de conflitos, acolhimento e gestão de processos com pessoas",
+            "ideais": ["Gato", "Águia", "Lobo"]
+        }
+    else:
+        return {
+            "atividades": "atividades multifuncionais que exigem flexibilidade, adaptação a diferentes cenários e equilíbrio entre execução metódica e relacionamento interpessoal",
+            "ideais": ["Lobo", "Tubarão", "Águia", "Gato"]
+        }
+
 def texto_animal(animal, perc):
     if animal == "Gato":
         if perc >= 25: return "Indica uma pessoa colaborativa, empática e prestativa. Facilidade para trabalhar em equipe, cordialidade e disposição para manter um ambiente harmonioso."
@@ -147,14 +176,14 @@ def texto_animal(animal, perc):
         if perc >= 25: return "Sugere grande capacidade criativa, visão de futuro, facilidade em inovar e propor melhorias para processos engessados."
         else: return "Preferência por processos definidos e estruturados. Mostra menor foco na inovação disruptiva e maior conforto no que já está validado."
 
-def obter_fortes_dinamicos(t1, t2, vaga):
+def obter_fortes_dinamicos(t1, t2, vaga, atividades):
     forcas = {
         "Tubarão": "agilidade, senso de urgência, foco em entregar resultados práticos e capacidade de lidar com momentos de pressão",
         "Lobo": "organização minuciosa, foco na qualidade das entregas, atenção aos detalhes e cumprimento rigoroso de processos",
         "Águia": "visão ampla, rápida adaptação a imprevistos da função e criatividade para encontrar soluções eficazes",
         "Gato": "excelente relacionamento interpessoal, comunicação empática e forte espírito de cooperação"
     }
-    return f"Para atuar na posição de {vaga}, a predominância de {t1} traz {forcas[t1]}. Complementarmente, os traços de {t2} reforçam a atuação d{t1} com {forcas[t2]} no dia a dia."
+    return f"Considerando as {atividades}, a predominância do perfil {t1} traz {forcas[t1]}. Complementarmente, os traços de {t2} reforçam a atuação do perfil {t1} com {forcas[t2]} no dia a dia."
 
 def obter_fracos_dinamicos(t1):
     fracos = {
@@ -206,9 +235,8 @@ def gerar_pdf(nome_busca):
     empresa = str(linha.get("Empresa", "Não Informada")).title()
     data_app = str(linha.get("Carimbo de data/hora", "Não Informada"))
     
-    # 🧠 Chama o Cérebro de Gênero
+    # 🧠 Inteligência
     gen = obter_artigos(nome_real)
-
     animais = calcular_perfil_animais(linha)
     pnl = calcular_sistema_representacional(linha)
     
@@ -219,33 +247,23 @@ def gerar_pdf(nome_busca):
     t2_n, t2_v = animais_ord[1]
     pnl_top_n, pnl_top_v = pnl_ord[0]
     
-    # 🧠 MATRIZ RIGOROSA DE VEREDICTO (Correção de Lógica)
-    v_low = vaga.lower()
-    
-    # Categoria 1: Foco, Precisão, Processos e Execução
-    if any(k in v_low for k in ["contab", "financ", "fiscal", "lobo", "adm", "process", "ti", "suport", "auditor", "qualidad", "estoque", "logistic", "motorist"]):
-        perfis_ideais = ["Lobo", "Tubarão"]
-    # Categoria 2: Vendas, Liderança, Metas e Dinamismo
-    elif any(k in v_low for k in ["vend", "comercial", "geren", "diretor", "lider", "meta", "tubarao", "expansao", "negocio"]):
-        perfis_ideais = ["Tubarão", "Águia"]
-    # Categoria 3: Pessoas, Atendimento, Empatia e RH (Lobo adicionado!)
-    elif any(k in v_low for k in ["rh", "human", "atend", "gato", "client", "relacionamento", "cs", "sucesso", "pessoal", "dp", "psico", "recep"]):
-        perfis_ideais = ["Gato", "Águia", "Lobo"]
-    # Categoria Padrão de Segurança
-    else:
-        perfis_ideais = ["Lobo", "Tubarão", "Águia", "Gato"] 
+    # 🧠 MATRIZ RIGOROSA DE VEREDICTO E ATIVIDADES
+    cat_info = categorizar_vaga(vaga)
+    perfis_ideais = cat_info["ideais"]
+    atividades_desc = cat_info["atividades"]
 
     # O Filtro de Contratação
     if t1_n in perfis_ideais:
         veredicto = "CONTRATAR"
-        just_veredicto = f"{gen['O_mai']} {gen['candidato']} apresenta excelente aderência, pois o perfil predominante ({t1_n}) está diretamente alinhado às exigências necessárias para a posição/setor de {vaga}."
+        just_veredicto = f"{gen['O_mai']} {gen['candidato']} apresenta excelente aderência, pois o perfil predominante ({t1_n}) está diretamente alinhado às exigências necessárias para as {atividades_desc}."
     elif t2_n in perfis_ideais:
         veredicto = "CONTRATAR COM RESSALVAS"
-        just_veredicto = f"O perfil principal ({t1_n}) apresenta contrastes com o padrão idealmente esperado para {vaga}, mas o perfil secundário ({t2_n}) oferece o equilíbrio mínimo necessário. Exigirá acompanhamento do gestor."
+        just_veredicto = f"O perfil principal ({t1_n}) apresenta contrastes com o padrão idealmente esperado para o cargo/setor avaliado ({vaga}), mas o perfil secundário ({t2_n}) oferece o equilíbrio mínimo necessário para as {atividades_desc}. Exigirá acompanhamento do gestor."
     else:
         veredicto = "NÃO CONTRATAR"
-        just_veredicto = f"O perfil natural d{gen['o_min']} {gen['candidato']} ({t1_n} primário e {t2_n} secundário) demonstra forte desalinhamento com as exigências comportamentais e rotineiras fundamentais para a posição/setor de {vaga}."
+        just_veredicto = f"O perfil natural d{gen['o_min']} {gen['candidato']} ({t1_n} primário e {t2_n} secundário) demonstra forte desalinhamento com as exigências comportamentais para as {atividades_desc}."
 
+    # 📄 CONSTRUÇÃO DO PDF
     pdf = PDF()
     pdf.add_page()
     
@@ -268,9 +286,9 @@ def gerar_pdf(nome_busca):
         pdf.texto_normal(f"- {animal} ({animais[animal]}%): {texto_dinamico}")
 
     pdf.titulo_secao("Pontos Fortes e Fracos em relação à vaga")
-    pdf.texto_normal(f"Considerando as exigências para a posição/setor de {vaga}:\n")
+    pdf.texto_normal(f"Considerando as exigências do cargo/setor avaliado ({vaga}):\n")
     
-    texto_fortes = obter_fortes_dinamicos(t1_n, t2_n, vaga)
+    texto_fortes = obter_fortes_dinamicos(t1_n, t2_n, vaga, atividades_desc)
     texto_fracos = obter_fracos_dinamicos(t1_n)
     
     pdf.texto_normal(f"[+] Pontos Fortes: {texto_fortes}")
