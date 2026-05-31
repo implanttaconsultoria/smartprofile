@@ -4,7 +4,7 @@ import unicodedata
 import os
 
 # =====================================================================
-# 🛡️ 1. FUNÇÕES DE LIMPEZA E GÊNERO (NOVIDADE)
+# 🛡️ 1. FUNÇÕES DE LIMPEZA E GÊNERO
 # =====================================================================
 def normalizar_busca(texto):
     if pd.isna(texto):
@@ -143,7 +143,7 @@ class PDF(FPDF):
         self.ln(2)
 
 # =====================================================================
-# 🧠 4. DICIONÁRIOS DE INTELIGÊNCIA DE TEXTO
+# 🧠 4. DICIONÁRIOS DE INTELIGÊNCIA DE TEXTO E VAGAS
 # =====================================================================
 def texto_animal(animal, perc):
     if animal == "Gato":
@@ -159,15 +159,29 @@ def texto_animal(animal, perc):
         if perc >= 25: return "Sugere grande capacidade criativa, visão de futuro, facilidade em inovar e propor melhorias para processos engessados."
         else: return "Preferência por processos definidos e estruturados. Mostra menor foco na inovação disruptiva e maior conforto no que já está validado."
 
+def obter_fortes_dinamicos(t1, t2, vaga):
+    forcas = {
+        "Tubarão": "agilidade, senso de urgência, foco em entregar resultados práticos e capacidade de lidar com momentos de pressão",
+        "Lobo": "organização minuciosa, foco na qualidade das entregas, atenção aos detalhes e cumprimento rigoroso de processos",
+        "Águia": "visão ampla, rápida adaptação a imprevistos da função e criatividade para encontrar soluções eficazes",
+        "Gato": "excelente relacionamento interpessoal, comunicação empática e forte espírito de cooperação"
+    }
+    return f"Para atuar na posição de {vaga}, a predominância de {t1} traz {forcas[t1]}. Complementarmente, os traços de {t2} reforçam a atuação d{t1} com {forcas[t2]} no dia a dia."
+
+def obter_fracos_dinamicos(t1):
+    fracos = {
+        "Tubarão": "Pode demonstrar impaciência em processos que sejam muito lentos, tarefas monótonas ou situações que exijam excessiva cautela e longas análises de detalhes.",
+        "Lobo": "Pode apresentar alguma resistência a mudanças de última hora, improvisos constantes ou ambientes com pouca estruturação e falta de regras claras.",
+        "Águia": "Pode ter dificuldade em manter o engajamento e o foco contínuo em rotinas estritamente repetitivas, burocráticas ou excessivamente engessadas.",
+        "Gato": "Pode evitar situações de conflito, tendo maior dificuldade em aplicar cobranças firmes ou tomar decisões impessoais sob forte pressão."
+    }
+    return fracos[t1]
+
 def texto_atencao_gestao(animal, gen):
-    if animal == "Tubarão":
-        return f"Recomenda-se uma liderança baseada em metas claras e autonomia, evitando a microgestão. O gestor deve monitorar possíveis atritos com a equipe devido ao forte senso de urgência d{gen['o_min']} {gen['candidato']}, garantindo um ambiente de respeito mútuo e direcionando essa energia para resultados táticos."
-    elif animal == "Lobo":
-        return f"A gestão precisa fornecer um ambiente estruturado e com regras bem definidas. Mudanças repentinas de escopo podem gerar desconforto. O líder ideal deve comunicar alterações com antecedência, valorizar a organização e oferecer orientações lógicas e detalhadas para {gen['o_colaborador']}."
-    elif animal == "Águia":
-        return f"A gestão deve evitar rotinas excessivamente burocráticas ou repetitivas, que podem causar desmotivação. É recomendável oferecer espaço para ideias e inovações. O líder deve atuar como um facilitador, guiando o foco d{gen['o_min']} {gen['candidato']} para garantir que a sua criatividade não comprometa os prazos estipulados."
-    else: # Gato
-        return f"A gestão deve priorizar feedbacks humanizados e um clima organizacional harmonioso. {gen['O_mai']} {gen['candidato']} renderá melhor sob uma liderança acolhedora. O líder deve ficar atento para que o foco natural d{gen['o_min']} {gen['candidato']} em relacionamentos e colaboração não ofusque a entrega objetiva das tarefas operacionais."
+    if animal == "Tubarão": return f"Recomenda-se uma liderança baseada em metas claras e autonomia, evitando a microgestão. O gestor deve monitorar possíveis atritos com a equipe devido ao forte senso de urgência d{gen['o_min']} {gen['candidato']}, garantindo um ambiente de respeito mútuo e direcionando essa energia para resultados táticos."
+    elif animal == "Lobo": return f"A gestão precisa fornecer um ambiente estruturado e com regras bem definidas. Mudanças repentinas de escopo podem gerar desconforto. O líder ideal deve comunicar alterações com antecedência, valorizar a organização e oferecer orientações lógicas e detalhadas para {gen['o_colaborador']}."
+    elif animal == "Águia": return f"A gestão deve evitar rotinas excessivamente burocráticas ou repetitivas, que podem causar desmotivação. É recomendável oferecer espaço para ideias e inovações. O líder deve atuar como um facilitador, guiando o foco d{gen['o_min']} {gen['candidato']} para garantir que a sua criatividade não comprometa os prazos estipulados."
+    else: return f"A gestão deve priorizar feedbacks humanizados e um clima organizacional harmonioso. {gen['O_mai']} {gen['candidato']} renderá melhor sob uma liderança acolhedora. O líder deve ficar atento para que o foco natural d{gen['o_min']} {gen['candidato']} em relacionamentos e colaboração não ofusque a entrega objetiva das tarefas operacionais."
 
 # =====================================================================
 # ⚙️ 5. FUNÇÃO PRINCIPAL
@@ -202,7 +216,7 @@ def gerar_pdf(nome_busca):
     linha = df_cand.iloc[-1]
     
     nome_real = str(linha[col_nome]).strip().title()
-    vaga = str(linha.get("Setor", "Não Informado")).title()
+    vaga = str(linha.get("Setor", "Não Informado")).strip().title()
     empresa = str(linha.get("Empresa", "Não Informada")).title()
     data_app = str(linha.get("Carimbo de data/hora", "Não Informada"))
     
@@ -219,37 +233,26 @@ def gerar_pdf(nome_busca):
     t2_n, t2_v = animais_ord[1]
     pnl_top_n, pnl_top_v = pnl_ord[0]
     
+    # Avaliação de Fit Cultural Genérico (Para o Veredicto Final)
     v_low = vaga.lower()
     if any(k in v_low for k in ["contab", "financ", "fiscal", "lobo", "adm", "process", "ti", "suport", "auditor", "qualidad", "estoque", "logistica"]):
-        tipo = "Processos/Operacional/Analítico"
-        fortes = "Organização, conformidade com processos, foco em detalhes e execução consistente."
-        fracos = "Pode evitar improvisos rápidos ou situações de conflito intenso."
         se_encaixa = (t1_n in ["Lobo", "Tubarão", "Gato"]) 
     elif any(k in v_low for k in ["vend", "comercial", "geren", "diretor", "lider", "meta", "tubarao", "expansao", "negocio"]):
-        tipo = "Comercial/Liderança/Resultados"
-        fortes = "Foco em metas, persuasão, resiliência sob pressão e relacionamento."
-        fracos = "Pode apresentar dificuldades com rotinas altamente burocráticas ou rotineiras."
         se_encaixa = (t1_n in ["Tubarão", "Águia", "Gato"])
     elif any(k in v_low for k in ["rh", "human", "atend", "gato", "client", "relacionamento", "cs", "sucesso", "pessoal", "dp", "psico", "recep"]):
-        tipo = "Pessoas/Atendimento/Suporte"
-        fortes = "Escuta ativa, empatia, mediação de conflitos e forte trabalho em equipe."
-        fracos = "Dificuldade em tomar decisões frias que prejudiquem o clima da equipe."
         se_encaixa = (t1_n in ["Gato", "Águia", "Lobo"])
     else:
-        tipo = "Função Dinâmica / Geral"
-        fortes = "Forças dependem diretamente do escopo diário e do perfil da chefia."
-        fracos = "Requer alinhamento claro de expectativas no momento da integração."
-        se_encaixa = True
+        se_encaixa = (t1_n in ["Tubarão", "Lobo", "Águia", "Gato"]) # Na dúvida de vagas específicas como Motorista, assume que se encaixa e alerta os pontos.
 
     if se_encaixa:
         veredicto = "CONTRATAR"
-        just_veredicto = f"{gen['O_mai']} {gen['candidato']} apresenta excelente aderência à função, com destaque para características de {t1_n} e {t2_n}, que favorecem o desempenho em vagas de {tipo}."
+        just_veredicto = f"{gen['O_mai']} {gen['candidato']} apresenta excelente aderência, com destaque para características de {t1_n} e {t2_n}, que favorecem diretamente o desempenho das atividades no dia a dia para a posição/setor de {vaga}."
     elif t2_n in ["Tubarão", "Lobo", "Gato", "Águia"]: 
         veredicto = "CONTRATAR COM RESSALVAS"
-        just_veredicto = f"O perfil principal ({t1_n}) difere um pouco do esperado para {tipo}, mas o secundário ({t2_n}) equilibra. Exigirá acompanhamento nos primeiros meses."
+        just_veredicto = f"O perfil principal ({t1_n}) apresenta alguns contrastes com o padrão tradicionalmente esperado para {vaga}, mas o perfil secundário ({t2_n}) equilibra. Exigirá acompanhamento próximo nos primeiros meses."
     else:
         veredicto = "NÃO CONTRATAR"
-        just_veredicto = f"O perfil natural d{gen['o_min']} {gen['candidato']} demonstra desalinhamento com as exigências rotineiras e comportamentais desta vaga específica."
+        just_veredicto = f"O perfil natural d{gen['o_min']} {gen['candidato']} demonstra desalinhamento com as exigências rotineiras e comportamentais fundamentais para a posição/setor de {vaga}."
 
     pdf = PDF()
     pdf.add_page()
@@ -257,7 +260,7 @@ def gerar_pdf(nome_busca):
     pdf.set_font('Helvetica', 'B', 10)
     pdf.cell(0, 5, text_pdf(f"Candidat{gen['o_min']}: {nome_real}"), ln=True)
     pdf.set_font('Helvetica', '', 10)
-    pdf.cell(0, 5, text_pdf(f"Cargo Avaliado: {vaga}"), ln=True)
+    pdf.cell(0, 5, text_pdf(f"Cargo/Setor Avaliado: {vaga}"), ln=True)
     pdf.cell(0, 5, text_pdf(f"Empresa: {empresa}"), ln=True)
     pdf.cell(0, 5, text_pdf(f"Data e hora do preenchimento: {data_app}"), ln=True)
     pdf.ln(5)
@@ -273,9 +276,13 @@ def gerar_pdf(nome_busca):
         pdf.texto_normal(f"- {animal} ({animais[animal]}%): {texto_dinamico}")
 
     pdf.titulo_secao("Pontos Fortes e Fracos em relação à vaga")
-    pdf.texto_normal(f"Considerando as exigências para o setor de {vaga} ({tipo}):\n")
-    pdf.texto_normal(f"[+] Pontos Fortes: {fortes}")
-    pdf.texto_normal(f"[!] Pontos Fracos/Desenvolver: {fracos}")
+    pdf.texto_normal(f"Considerando as exigências para a posição/setor de {vaga}:\n")
+    
+    texto_fortes = obter_fortes_dinamicos(t1_n, t2_n, vaga)
+    texto_fracos = obter_fracos_dinamicos(t1_n)
+    
+    pdf.texto_normal(f"[+] Pontos Fortes: {texto_fortes}")
+    pdf.texto_normal(f"[!] Pontos de Desenvolvimento: {texto_fracos}")
 
     pdf.titulo_secao("Análise do Perfil Representacional")
     pdf.texto_normal(f"Resultados obtidos: {pnl['Visual']}% Visual, {pnl['Cinestésico']}% Cinestésico, {pnl['Auditivo']}% Auditivo e {pnl['Digital']}% Digital.")
@@ -300,5 +307,6 @@ def gerar_pdf(nome_busca):
     nome_ficheiro = f"Parecer_{normalizar_busca(nome_real).replace(' ', '_')}.pdf"
     pdf.output(nome_ficheiro)
     return nome_ficheiro
+
 if __name__ == "__main__":
     print(gerar_pdf("José Pedro"))
