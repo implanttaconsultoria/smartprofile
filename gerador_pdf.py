@@ -99,14 +99,14 @@ def calcular_perfil_animais(linha):
 # =====================================================================
 class PDF(FPDF):
     def header(self):
-        # Tenta inserir a logomarca da empresa se o ficheiro existir
+        # Limita a altura (h=18) para a logomarca não cortar a linha dos 30mm
         try:
             if os.path.exists('logo.png'):
-                self.image('logo.png', 10, 8, 30)
+                self.image('logo.png', x=10, y=8, h=18)
             elif os.path.exists('logo.jpg'):
-                self.image('logo.jpg', 10, 8, 30)
+                self.image('logo.jpg', x=10, y=8, h=18)
         except Exception:
-            pass # Se a imagem não for válida, o código ignora em silêncio
+            pass 
             
         self.set_font('Helvetica', 'B', 16)
         self.set_text_color(43, 92, 143)
