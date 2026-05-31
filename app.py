@@ -7,6 +7,15 @@ from streamlit_gsheets import GSheetsConnection
 import streamlit.components.v1 as components
 
 # =====================================================================
+# 🪄 FUNÇÃO DE FORMATAÇÃO PREMIUM (Nomes, Vagas e Empresas)
+# =====================================================================
+def formatar_nome_proprio(texto):
+    if pd.isna(texto): return ""
+    excecoes = ['de', 'da', 'do', 'das', 'dos', 'e']
+    palavras = str(texto).strip().lower().split()
+    return " ".join([p.capitalize() if p not in excecoes else p for p in palavras])
+
+# =====================================================================
 # 🪄 TRUQUE DE COMPATIBILIDADE (RENDER)
 # =====================================================================
 if os.path.exists("secrets.toml"):
@@ -153,6 +162,13 @@ def carregar_dados_planilha():
             df = df.dropna(subset=[coluna_nome])
             df = df.rename(columns={coluna_nome: "Nome"})
             
+            # 🪄 APLICA A FORMATAÇÃO PERFEITA NAS COLUNAS PRINCIPAIS
+            df["Nome"] = df["Nome"].apply(formatar_nome_proprio)
+            if "Empresa" in df.columns:
+                df["Empresa"] = df["Empresa"].apply(formatar_nome_proprio)
+            if "Setor" in df.columns:
+                df["Setor"] = df["Setor"].apply(formatar_nome_proprio)
+            
         return df
     except Exception as e:
         st.error(f"Erro de conexão: {e}")
@@ -204,7 +220,7 @@ gabarito_comportamental = {
     "Eu gosto de buscar conselhos de...": {"Pessoas bem sucedidas": "Tubarão", "Anciões, idosos e conselheiros": "Gato", "Autoridades no assunto": "Lobo", "Lugares, até os mais estranhos": "Águia"},
     "Meu lema é...": {"Fazer o que precisa ser feito": "Águia", "Fazer bem feito": "Lobo", "Fazer Junto com o grupo": "Gato", "Simplesmente Fazer": "Tubarão"},
     "Para mim é essencial...": {"Complexidade mesmo que pareça confusa": "Águia", "Ordem e sistematização": "Lobo", "Calor humano e animação": "Gato", "Coisas claras e simples": "Tubarão"},
-    "Tempo para mim é...": {"Algo que detesto desperdiçar": "Tubarão", "Um grande ciclo que termina e vem outro": "Gato", "Uma flecha que leva ao inevitável": "Lobo", "Irrelevante": "Águia"},
+    "Tempo para mim é...": {"Algo que detesto desperprdiçar": "Tubarão", "Um grande ciclo que termina e vem outro": "Gato", "Uma flecha que leva ao inevitável": "Lobo", "Irrelevante": "Águia"},
     "Se eu fosse bilionário...": {"Faria doações para muitas entidades": "Gato", "Criaria uma poupança avantajada": "Lobo", "Faria o que desse na cabeça": "Águia", "Exibiria bastante com algumas pessoas": "Tubarão"},
     "Eu acredito que...": {"O destino é mais importante que a jornada": "Tubarão", "A jornada é mais importante que o destino": "Gato", "Bastam um navio e uma estrela para navegar": "Águia", "Um centavo economizado é um centavo ganho": "Lobo"},
     "Eu acredito também que...": {"Aquele que hesita está perdido": "Tubarão", "De Grão em Grão a galinha enche o papo": "Lobo", "O que vai, volta": "Gato", "Um sorriso ou uma careta é igual para quem é cego": "Águia"},
