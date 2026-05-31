@@ -4,7 +4,7 @@ import unicodedata
 import os
 
 # =====================================================================
-# FUNCOES DE LIMPEZA
+# 🛡️ FUNCOES DE LIMPEZA (BLINDAGEM MAXIMA CONTRA ERROS DE FONTE)
 # =====================================================================
 def normalizar_busca(texto):
     if pd.isna(texto):
@@ -15,14 +15,15 @@ def normalizar_busca(texto):
 def text_pdf(texto):
     if not isinstance(texto, str):
         return ""
-    reps = {'ç':'c', 'ã':'a', 'õ':'o', 'á':'a', 'é':'e', 'í':'i', 'ó':'o', 'ú':'u', 
-            'ê':'e', 'â':'a', 'ô':'o', 'Ç':'C', 'Ã':'A', 'Õ':'O', 'Á':'A', 'É':'E', 'Í':'I', 'Ó':'O', 'Ú':'U'}
-    for c, r in reps.items():
-        texto = texto.replace(c, r)
+    # 1. Substitui símbolos que queremos manter visualmente parecidos
+    texto = texto.replace('✔', '[+]').replace('⚠', '[!]').replace('–', '-').replace('—', '-').replace('“', '"').replace('”', '"')
+    
+    # 2. A MAGIA: Transforma tudo em texto puro (remove acentos, emojis e espaços fantasmas)
+    texto = unicodedata.normalize('NFKD', texto).encode('ASCII', 'ignore').decode('ASCII')
     return texto
 
 # =====================================================================
-# LOGICA DE CALCULO
+# 🧮 LOGICA DE CALCULO
 # =====================================================================
 def calcular_sistema_representacional(linha):
     colunas_visual = ["Eu tomo decisões importantes baseados em: [o que me parece melhor]", "Durante uma discussão eu sou mais influenciado por: [se eu posso ou não ver o argumento da outra pessoa]", "Eu comunico mais facilmente o que se passa comigo: [do modo como me visto e aparento]", "É muito fácil para mim: [escolher as combinações de cores mais ricas e atraentes]", "Eu me percebo assim: [eu respondo fortemente às cores e à aparência de uma sala]"]
@@ -90,7 +91,7 @@ def calcular_perfil_animais(linha):
     return {"Águia": 0, "Gato": 0, "Lobo": 0, "Tubarão": 0}
 
 # =====================================================================
-# CLASSE GERADORA DO PDF
+# 📄 CLASSE GERADORA DO PDF
 # =====================================================================
 class PDF(FPDF):
     def header(self):
@@ -121,24 +122,24 @@ class PDF(FPDF):
         self.ln(2)
 
 # =====================================================================
-# DICIONARIOS DE INTELIGENCIA DE TEXTO
+# 🧠 DICIONARIOS DE INTELIGENCIA DE TEXTO
 # =====================================================================
 def texto_animal(animal, perc):
     if animal == "Gato":
-        if perc >= 25: return "Indica uma pessoa colaborativa, empática e prestativa. Facilidade para trabalhar em equipe, cordialidade e disposição para manter um ambiente harmonioso."
+        if perc >= 25: return "Indica uma pessoa colaborativa, empatica e prestativa. Facilidade para trabalhar em equipe, cordialidade e disposicao para manter um ambiente harmonioso."
         else: return "Menor foco no relacionamento interpessoal constante. Pode apresentar um perfil mais voltado para a tarefa do que para o acolhimento da equipa."
     elif animal == "Lobo":
-        if perc >= 25: return "Demonstra excelente atenção aos detalhes, respeito a regras e procedimentos. Boa capacidade de organização e constância com rotinas."
-        else: return "Perfil mais flexível, com menor apego a regras rígidas. Pode preferir ambientes onde haja menos microgestão e maior liberdade operacional."
+        if perc >= 25: return "Demonstra excelente atencao aos detalhes, respeito a regras e procedimentos. Boa capacidade de organizacao e constancia com rotinas."
+        else: return "Perfil mais flexivel, com menor apego a regras rigidas. Pode preferir ambientes onde haja menos microgestao e maior liberdade operacional."
     elif animal == "Tubarão":
-        if perc >= 25: return "Revela forte senso de urgência, foco absoluto em resultados, coragem para decidir e assertividade na execução de tarefas."
-        else: return "Percentual moderado-baixo indicando menor tendência a confrontos. Perfil mais cuidadoso que pode precisar de tempo para agir em situações de alta pressão."
+        if perc >= 25: return "Revela forte senso de urgencia, foco absoluto em resultados, coragem para decidir e assertividade na execucao de tarefas."
+        else: return "Percentual moderado-baixo indicando menor tendencia a confrontos. Perfil mais cuidadoso que pode precisar de tempo para agir em situacoes de alta pressao."
     elif animal == "Águia":
-        if perc >= 25: return "Sugere grande capacidade criativa, visão de futuro, facilidade em inovar e propor melhorias para processos engessados."
-        else: return "Preferência por processos definidos e estruturados. Mostra menor foco na inovação disruptiva e maior conforto no que já está validado."
+        if perc >= 25: return "Sugere grande capacidade criativa, visao de futuro, facilidade em inovar e propor melhorias para processos engessados."
+        else: return "Preferencia por processos definidos e estruturados. Mostra menor foco na inovacao disruptiva e maior conforto no que ja esta validado."
 
 # =====================================================================
-# FUNCAO PRINCIPAL
+# ⚙️ FUNCAO PRINCIPAL
 # =====================================================================
 def gerar_pdf(nome_busca):
     url_csv = "https://docs.google.com/spreadsheets/d/1cz6O2iSync1c2E-lNGmEsgwMBrOgB2DHWz02A-y2g1Y/export?format=csv"
@@ -186,35 +187,35 @@ def gerar_pdf(nome_busca):
     
     v_low = str(vaga).lower()
     if any(k in v_low for k in ["contab", "financ", "fiscal", "lobo", "adm", "process", "ti", "suport", "auditor", "qualidad", "estoque", "logistica"]):
-        tipo = "Processos/Operacional/Analítico"
-        fortes = "Organização, conformidade com processos, foco em detalhes e execução consistente."
-        fracos = "Pode evitar improvisos rápidos ou situações de conflito intenso."
+        tipo = "Processos/Operacional/Analitico"
+        fortes = "Organizacao, conformidade com processos, foco em detalhes e execucao consistente."
+        fracos = "Pode evitar improvisos rapidos ou situacoes de conflito intenso."
         se_encaixa = (t1_n in ["Lobo", "Tubarão", "Gato"]) 
     elif any(k in v_low for k in ["vend", "comercial", "geren", "diretor", "lider", "meta", "tubarao", "expansao", "negocio"]):
-        tipo = "Comercial/Liderança/Resultados"
-        fortes = "Foco em metas, persuasão, resiliência sob pressão e relacionamento."
-        fracos = "Pode apresentar dificuldades com rotinas altamente burocráticas ou rotineiras."
+        tipo = "Comercial/Lideranca/Resultados"
+        fortes = "Foco em metas, persuasao, resiliencia sob pressao e relacionamento."
+        fracos = "Pode apresentar dificuldades com rotinas altamente burocraticas ou rotineiras."
         se_encaixa = (t1_n in ["Tubarão", "Águia", "Gato"])
     elif any(k in v_low for k in ["rh", "human", "atend", "gato", "client", "relacionamento", "cs", "sucesso", "pessoal", "dp", "psico", "recep"]):
         tipo = "Pessoas/Atendimento/Suporte"
-        fortes = "Escuta ativa, empatia, mediação de conflitos e forte trabalho em equipa."
-        fracos = "Dificuldade em tomar decisões frias que prejudiquem o clima da equipa."
+        fortes = "Escuta ativa, empatia, mediacao de conflitos e forte trabalho em equipa."
+        fracos = "Dificuldade em tomar decisoes frias que prejudiquem o clima da equipa."
         se_encaixa = (t1_n in ["Gato", "Águia", "Lobo"])
     else:
-        tipo = "Função Dinâmica / Geral"
-        fortes = "Forças dependem diretamente do escopo diário e do perfil da chefia."
-        fracos = "Requer alinhamento claro de expectativas no momento da integração."
+        tipo = "Funcao Dinamica / Geral"
+        fortes = "Forcas dependem diretamente do escopo diario e do perfil da chefia."
+        fracos = "Requer alinhamento claro de expectativas no momento da integracao."
         se_encaixa = True
 
     if se_encaixa:
         veredicto = "CONTRATAR"
-        just_veredicto = f"O candidato apresenta excelente aderência à função, com destaque para características de {t1_n} e {t2_n}, que favorecem o desempenho em vagas de {tipo}."
+        just_veredicto = f"O candidato apresenta excelente aderencia a funcao, com destaque para caracteristicas de {t1_n} e {t2_n}, que favorecem o desempenho em vagas de {tipo}."
     elif t2_n in ["Tubarão", "Lobo", "Gato", "Águia"]: 
         veredicto = "CONTRATAR COM RESSALVAS"
-        just_veredicto = f"O perfil principal ({t1_n}) difere um pouco do esperado para {tipo}, mas o secundário ({t2_n}) equilibra. Exigirá acompanhamento nos primeiros meses."
+        just_veredicto = f"O perfil principal ({t1_n}) difere um pouco do esperado para {tipo}, mas o secundario ({t2_n}) equilibra. Exigira acompanhamento nos primeiros meses."
     else:
-        veredicto = "NÃO CONTRATAR"
-        just_veredicto = "O perfil natural do candidato demonstra desalinhamento com as exigências rotineiras e comportamentais desta vaga específica."
+        veredicto = "NAO CONTRATAR"
+        just_veredicto = "O perfil natural do candidato demonstra desalinhamento com as exigencias rotineiras e comportamentais desta vaga especifica."
 
     pdf = PDF()
     pdf.add_page()
@@ -228,42 +229,41 @@ def gerar_pdf(nome_busca):
     pdf.ln(5)
 
     intro = (f"O candidato {nome_real} apresentou o seguinte resultado no teste de perfil comportamental: "
-             f"{animais['Tubarão']}% Tubarão, {animais['Lobo']}% Lobo, {animais['Águia']}% Águia e {animais['Gato']}% Gato.\n\n"
-             f"Ex.: O perfil {t1_n} teve {t1_v}% de aderência (predominante), seguido do perfil {t2_n} com {t2_v}% de aderência.")
+             f"{animais['Tubarão']}% Tubarao, {animais['Lobo']}% Lobo, {animais['Águia']}% Aguia e {animais['Gato']}% Gato.\n\n"
+             f"Ex.: O perfil {t1_n} teve {t1_v}% de aderencia (predominante), seguido do perfil {t2_n} com {t2_v}% de aderencia.")
     pdf.texto_normal(intro)
 
-    pdf.titulo_secao("Análise do Perfil Comportamental")
+    pdf.titulo_secao("Analise do Perfil Comportamental")
     for animal in ["Tubarão", "Lobo", "Gato", "Águia"]:
         texto_dinamico = texto_animal(animal, animais[animal])
         pdf.texto_normal(f"- {animal} ({animais[animal]}%): {texto_dinamico}")
 
-    pdf.titulo_secao("Pontos Fortes e Fracos do candidato em relação à vaga")
-    pdf.texto_normal(f"Considerando as exigências para o setor de {vaga} ({tipo}):\n")
-    pdf.texto_normal(f"✔ Pontos Fortes: {fortes}")
-    pdf.texto_normal(f"⚠ Pontos Fracos/Desenvolver: {fracos}")
+    pdf.titulo_secao("Pontos Fortes e Fracos do candidato em relacao a vaga")
+    pdf.texto_normal(f"Considerando as exigencias para o setor de {vaga} ({tipo}):\n")
+    pdf.texto_normal(f"[+] Pontos Fortes: {fortes}")
+    pdf.texto_normal(f"[!] Pontos Fracos/Desenvolver: {fracos}")
 
-    pdf.titulo_secao("Análise do Perfil Representacional")
-    pdf.texto_normal(f"Resultados obtidos: {pnl['Visual']}% Visual, {pnl['Cinestésico']}% Cinestésico, {pnl['Auditivo']}% Auditivo e {pnl['Digital']}% Digital.")
+    pdf.titulo_secao("Analise do Perfil Representacional")
+    pdf.texto_normal(f"Resultados obtidos: {pnl['Visual']}% Visual, {pnl['Cinestésico']}% Cinestesico, {pnl['Auditivo']}% Auditivo e {pnl['Digital']}% Digital.")
     
-    txt_pnl = f"Predominância do perfil {pnl_top_n} ({pnl_top_v}%). "
-    if pnl_top_n == "Digital": txt_pnl += "Indica forte tendência a processar informações de forma lógica, analisar procedimentos com racionalidade e valorizar precisão. A melhor abordagem é fornecer instruções claras e baseadas em factos."
-    elif pnl_top_n == "Cinestésico": txt_pnl += "Indica facilidade com atividades práticas e aprendizagem por execução. A melhor abordagem é o treino on-the-job, valorizando o lado humano e o acolhimento."
-    elif pnl_top_n == "Visual": txt_pnl += "Indica rapidez mental e aprendizagem por observação e mapas visuais. A melhor abordagem é manter contato visual, usar esquemas e mostrar o 'cenário geral'."
-    else: txt_pnl += "Indica forte capacidade de escuta e comunicação verbal. A melhor abordagem é o diálogo claro, feedbacks conversados e evitar dar ordens em locais muito ruidosos."
+    txt_pnl = f"Predominancia do perfil {pnl_top_n} ({pnl_top_v}%). "
+    if pnl_top_n == "Digital": txt_pnl += "Indica forte tendencia a processar informacoes de forma logica, analisar procedimentos com racionalidade e valorizar precisao. A melhor abordagem e fornecer instrucoes claras e baseadas em factos."
+    elif pnl_top_n == "Cinestésico": txt_pnl += "Indica facilidade com atividades praticas e aprendizagem por execucao. A melhor abordagem e o treino on-the-job, valorizando o lado humano e o acolhimento."
+    elif pnl_top_n == "Visual": txt_pnl += "Indica rapidez mental e aprendizagem por observacao e mapas visuais. A melhor abordagem e manter contato visual, usar esquemas e mostrar o 'cenario geral'."
+    else: txt_pnl += "Indica forte capacidade de escuta e comunicacao verbal. A melhor abordagem e o dialogo claro, feedbacks conversados e evitar dar ordens em locais muito ruidosos."
     pdf.texto_normal(txt_pnl)
 
-    pdf.titulo_secao("Adequação ao Cargo")
+    pdf.titulo_secao("Adequacao ao Cargo")
     pdf.texto_normal(just_veredicto)
 
-    pdf.titulo_secao("Pontos de Atenção para a Gestão")
-    pdf.texto_normal(f"Caso o candidato seja integrado, o gestor direto deve ter em atenção que o colaborador, por ter traços fortes de {t1_n}, responderá melhor a um modelo de liderança que respeite a sua natureza. Deverá ser feito um alinhamento claro das expectativas nas primeiras semanas, focando nos pontos fracos descritos acima para mitigar quebras de produtividade.")
+    pdf.titulo_secao("Pontos de Atencao para a Gestao")
+    pdf.texto_normal(f"Caso o candidato seja integrado, o gestor direto deve ter em atencao que o colaborador, por ter tracos fortes de {t1_n}, respondera melhor a um modelo de lideranca que respeite a sua natureza. Devera ser feito um alinhamento claro das expectativas nas primeiras semanas, focando nos pontos fracos descritos acima para mitigar quebras de produtividade.")
 
-    pdf.titulo_secao("Conclusão do Parecer")
-    pdf.texto_destaque(f"Recomendação Final: {veredicto}")
+    pdf.titulo_secao("Conclusao do Parecer")
+    pdf.texto_destaque(f"Recomendacao Final: {veredicto}")
 
     nome_ficheiro = f"Parecer_{normalizar_busca(nome_real).replace(' ', '_')}.pdf"
     pdf.output(nome_ficheiro)
     return nome_ficheiro
-
 if __name__ == "__main__":
     print(gerar_pdf("José Pedro"))
