@@ -7,20 +7,14 @@ import os
 # 🛡️ 1. FUNÇÕES DE LIMPEZA E GÊNERO
 # =====================================================================
 def normalizar_busca(texto):
-    if pd.isna(texto):
-        return ""
+    if pd.isna(texto): return ""
     texto = str(texto).lower().strip()
     return unicodedata.normalize('NFKD', texto).encode('ASCII', 'ignore').decode('utf-8')
 
 def text_pdf(texto):
-    if not isinstance(texto, str):
-        return ""
-    reps = {
-        '✔': '[+]', '⚠': '[!]', '–': '-', '—': '-', 
-        '“': '"', '”': '"', '\u200b': '', '\ufeff': '', '\xa0': ' '
-    }
-    for c, r in reps.items():
-        texto = texto.replace(c, r)
+    if not isinstance(texto, str): return ""
+    reps = {'✔': '[+]', '⚠': '[!]', '–': '-', '—': '-', '“': '"', '”': '"', '\u200b': '', '\ufeff': '', '\xa0': ' '}
+    for c, r in reps.items(): texto = texto.replace(c, r)
     return texto.encode('latin-1', 'ignore').decode('latin-1')
 
 def definir_genero(nome):
@@ -28,17 +22,13 @@ def definir_genero(nome):
     masculinos_a = ['luca', 'noa', 'noah', 'joshua', 'jonatas', 'messias', 'ozias', 'matias', 'zacarias', 'andrea', 'batista']
     femininos_excecoes = ['miriam', 'raquel', 'ester', 'ruth', 'elisabeth', 'carmen', 'iris', 'lais', 'beatriz', 'tais', 'thais', 'aline', 'simone', 'eliane', 'viviane', 'lilian', 'suelen', 'karen', 'ingrid', 'ellen', 'helen', 'cleide', 'meire', 'irene', 'shirley', 'rose', 'ariadne']
     
-    if primeiro_nome in masculinos_a:
-        return "M"
-    if primeiro_nome in femininos_excecoes or primeiro_nome.endswith('a') or primeiro_nome.endswith('y') or primeiro_nome.endswith('ie') or primeiro_nome.endswith('elly'):
-        return "F"
+    if primeiro_nome in masculinos_a: return "M"
+    if primeiro_nome in femininos_excecoes or primeiro_nome.endswith('a') or primeiro_nome.endswith('y') or primeiro_nome.endswith('ie') or primeiro_nome.endswith('elly'): return "F"
     return "M"
 
 def obter_artigos(nome):
-    if definir_genero(nome) == "F":
-        return {"o_min": "a", "O_mai": "A", "candidato": "candidata", "integrado": "integrada", "o_colaborador": "a colaboradora"}
-    else:
-        return {"o_min": "o", "O_mai": "O", "candidato": "candidato", "integrado": "integrado", "o_colaborador": "o colaborador"}
+    if definir_genero(nome) == "F": return {"o_min": "a", "O_mai": "A", "candidato": "candidata", "integrado": "integrada", "o_colaborador": "a colaboradora"}
+    else: return {"o_min": "o", "O_mai": "O", "candidato": "candidato", "integrado": "integrado", "o_colaborador": "o colaborador"}
 
 # =====================================================================
 # 🧮 2. LÓGICA DE CÁLCULO
@@ -123,10 +113,8 @@ class PDF(FPDF):
         self.ln(10)
 
     def titulo_secao(self, title):
-        if self.get_y() > 250:  
-            self.add_page()
-        else:
-            self.ln(3)
+        if self.get_y() > 250: self.add_page()
+        else: self.ln(3)
         self.set_font('Helvetica', 'B', 11)
         self.set_text_color(43, 92, 143)
         self.cell(0, 8, text_pdf(title), ln=True)
@@ -203,16 +191,14 @@ def gerar_pdf(nome_busca):
                 break
                 
     col_nome = next((c for c in df.columns if "nome" in str(c).lower()), None)
-    if not col_nome: 
-        return "Erro: Coluna 'Nome' não encontrada."
+    if not col_nome: return "Erro: Coluna 'Nome' não encontrada."
 
     df = df.dropna(subset=[col_nome])
     busca_limpa = normalizar_busca(nome_busca)
     nomes_plan = df[col_nome].apply(normalizar_busca)
     df_cand = df[nomes_plan.str.contains(busca_limpa, na=False)]
     
-    if df_cand.empty: 
-        return f"Candidato '{nome_busca}' não encontrado."
+    if df_cand.empty: return f"Candidato '{nome_busca}' não encontrado."
     linha = df_cand.iloc[-1]
     
     nome_real = str(linha[col_nome]).strip().title()
@@ -233,26 +219,32 @@ def gerar_pdf(nome_busca):
     t2_n, t2_v = animais_ord[1]
     pnl_top_n, pnl_top_v = pnl_ord[0]
     
-    # Avaliação de Fit Cultural Genérico (Para o Veredicto Final)
+    # 🧠 MATRIZ RIGOROSA DE VEREDICTO (Correção de Lógica)
     v_low = vaga.lower()
-    if any(k in v_low for k in ["contab", "financ", "fiscal", "lobo", "adm", "process", "ti", "suport", "auditor", "qualidad", "estoque", "logistica"]):
-        se_encaixa = (t1_n in ["Lobo", "Tubarão", "Gato"]) 
+    
+    # Categoria 1: Foco, Precisão, Processos e Execução
+    if any(k in v_low for k in ["contab", "financ", "fiscal", "lobo", "adm", "process", "ti", "suport", "auditor", "qualidad", "estoque", "logistic", "motorist"]):
+        perfis_ideais = ["Lobo", "Tubarão"]
+    # Categoria 2: Vendas, Liderança, Metas e Dinamismo
     elif any(k in v_low for k in ["vend", "comercial", "geren", "diretor", "lider", "meta", "tubarao", "expansao", "negocio"]):
-        se_encaixa = (t1_n in ["Tubarão", "Águia", "Gato"])
+        perfis_ideais = ["Tubarão", "Águia"]
+    # Categoria 3: Pessoas, Atendimento, Empatia e RH (Lobo adicionado!)
     elif any(k in v_low for k in ["rh", "human", "atend", "gato", "client", "relacionamento", "cs", "sucesso", "pessoal", "dp", "psico", "recep"]):
-        se_encaixa = (t1_n in ["Gato", "Águia", "Lobo"])
+        perfis_ideais = ["Gato", "Águia", "Lobo"]
+    # Categoria Padrão de Segurança
     else:
-        se_encaixa = (t1_n in ["Tubarão", "Lobo", "Águia", "Gato"]) # Na dúvida de vagas específicas como Motorista, assume que se encaixa e alerta os pontos.
+        perfis_ideais = ["Lobo", "Tubarão", "Águia", "Gato"] 
 
-    if se_encaixa:
+    # O Filtro de Contratação
+    if t1_n in perfis_ideais:
         veredicto = "CONTRATAR"
-        just_veredicto = f"{gen['O_mai']} {gen['candidato']} apresenta excelente aderência, com destaque para características de {t1_n} e {t2_n}, que favorecem diretamente o desempenho das atividades no dia a dia para a posição/setor de {vaga}."
-    elif t2_n in ["Tubarão", "Lobo", "Gato", "Águia"]: 
+        just_veredicto = f"{gen['O_mai']} {gen['candidato']} apresenta excelente aderência, pois o perfil predominante ({t1_n}) está diretamente alinhado às exigências necessárias para a posição/setor de {vaga}."
+    elif t2_n in perfis_ideais:
         veredicto = "CONTRATAR COM RESSALVAS"
-        just_veredicto = f"O perfil principal ({t1_n}) apresenta alguns contrastes com o padrão tradicionalmente esperado para {vaga}, mas o perfil secundário ({t2_n}) equilibra. Exigirá acompanhamento próximo nos primeiros meses."
+        just_veredicto = f"O perfil principal ({t1_n}) apresenta contrastes com o padrão idealmente esperado para {vaga}, mas o perfil secundário ({t2_n}) oferece o equilíbrio mínimo necessário. Exigirá acompanhamento do gestor."
     else:
         veredicto = "NÃO CONTRATAR"
-        just_veredicto = f"O perfil natural d{gen['o_min']} {gen['candidato']} demonstra desalinhamento com as exigências rotineiras e comportamentais fundamentais para a posição/setor de {vaga}."
+        just_veredicto = f"O perfil natural d{gen['o_min']} {gen['candidato']} ({t1_n} primário e {t2_n} secundário) demonstra forte desalinhamento com as exigências comportamentais e rotineiras fundamentais para a posição/setor de {vaga}."
 
     pdf = PDF()
     pdf.add_page()
