@@ -141,8 +141,8 @@ def calcular_sistema_representacional(linha):
     d = sum([pd.to_numeric(linha.get(col, 0), errors='coerce') for col in colunas_digital])
     
     total = (v if pd.notna(v) else 0) + (a if pd.notna(a) else 0) + (c if pd.notna(c) else 0) + (d if pd.notna(d) else 0)
-    if total > 0: return {"Visual": round((v/total)*100, 1), "Auditivo": round((a/total)*100, 1), "Cinestésico": round((c/total)*100, 1), "Digital": round((d/total)*100, 1)}
-    return {"Visual": 25.0, "Auditivo": 25.0, "Cinestésico": 25.0, "Digital": 25.0}
+    if total > 0: return {"Visual": round((v/total)*100, 1), "Auditivo": round((a/total)*100, 1), "Cinestésico": round((c/total)*100, 1), "Digital (Lógico)": round((d/total)*100, 1)}
+    return {"Visual": 25.0, "Auditivo": 25.0, "Cinestésico": 25.0, "Digital (Lógico)": 25.0}
 
 gabarito_comportamental = {
     "Eu sou": {"Idealista, criativo e visionário": "Águia", "Divertido, espiritual e benéfico": "Gato", "Confiável, meticuloso e previsível": "Lobo", "Focado, determinado e persistente": "Tubarão"},
@@ -203,7 +203,7 @@ else:
     lista_candidatos = ["Aguardando candidatos na planilha..."]
 
 # =====================================================================
-# TELA 1: PERFIL DO CANDIDATO (MANTIDA INTACTA)
+# TELA 1: PERFIL DO CANDIDATO
 # =====================================================================
 if tela == "👤 Perfil do Candidato":
     col_sel, col_btn = st.columns([3, 1.5])
@@ -288,7 +288,7 @@ if tela == "👤 Perfil do Candidato":
                 "Visual": "processa informações em alta velocidade, ideal para rotinas dinâmicas e de alta carga visual.",
                 "Auditivo": "excelente para posições que exigem escuta ativa, diálogo e forte negociação verbal.",
                 "Cinestésico": "melhor aproveitado em funções práticas, que envolvem contato, intuição e estabilidade.",
-                "Digital": "altamente analítico, ideal para cenários que exigem validação de dados, fatos e lógica fria."
+                "Digital (Lógico)": "altamente analítico, ideal para cenários que exigem validação de dados, fatos e lógica fria."
             }
             
             col_concl1, col_concl2 = st.columns([1.5, 1])
@@ -305,6 +305,35 @@ if tela == "👤 Perfil do Candidato":
                 else:
                     st.error("❌ RECOMENDAÇÃO: **DESALINHADO À VAGA**")
                     st.caption("🚨 **Justificativa:** Desalinhamento natural com as rotinas diárias da função.")
+
+        # 🟢 BLOCO RESTAURADO: PNL E MANUAL DE LIDERANÇA
+        with st.container():
+            st.markdown("---")
+            st.subheader("📊 Sistema Representacional (PNL)")
+            
+            df_chart = pd.DataFrame({"Canal": list(valores_canais.keys()), "Percentagem (%)": list(valores_canais.values())})
+            fig = px.bar(df_chart, x="Canal", y="Percentagem (%)", color="Canal", text="Percentagem (%)", template="streamlit", color_discrete_map=cores_canais)
+            fig.update_layout(height=260, showlegend=False, margin=dict(t=10, b=10, l=0, r=0))
+            st.plotly_chart(fig, use_container_width=True)
+            
+            st.subheader("🧠 Manual de Relacionamento (Liderança)")
+            st.info("💡 **Dica para a Gestão:** Use o canal predominante para guiar a comunicação diária com o colaborador.")
+            
+            st.markdown(f"""
+            Como o candidato possui o canal **{predominante_pnl}** mais elevado, aja da seguinte forma:
+            * **Se for Visual:** Use termos como *"Veja bem"*, *"Imagine esse cenário"*. Mantenha contato visual e apoie-se em imagens.
+            * **Se for Auditivo:** Module o tom de voz, evite dar ordens em ambientes barulhentos. Use *"Me conte o que acha"*.
+            * **Se for Cinestésico:** Crie um clima acolhedor antes de corrigir, valorize o lado humano e dê espaço para ele experimentar na prática.
+            * **Se for Digital:** Vá direto ao ponto apresentando fatos, planilhas e lógicas claras. Evite apelo puramente emocional.
+            """)
+            
+            st.markdown('<hr class="no-print">', unsafe_allow_html=True)
+            with st.expander("🔍 Ver Respostas Brutas do Teste Comportamental (Texto)", expanded=False):
+                perguntas_texto = list(gabarito_comportamental.keys())
+                for p in perguntas_texto:
+                    if p in linha_cand:
+                        st.markdown(f"**{p}**")
+                        st.code(linha_cand[p])
 
 # =====================================================================
 # TELA 2: DASHBOARD GERAL
@@ -345,7 +374,7 @@ elif tela == "⚖️ Comparador (Ranking)":
     if len(candidatos_selecionados) >= 2 and vaga_referencia:
         st.markdown('<hr class="no-print" style="margin: 0.5em 0;">', unsafe_allow_html=True)
         
-        # 🌟 NOVO CABEÇALHO OFICIAL COM A LOGO À ESQUERDA
+        # 🌟 CABEÇALHO OFICIAL COM A LOGO À ESQUERDA
         with st.container():
             col_logo_comp, col_tit_comp = st.columns([1.2, 4])
             with col_logo_comp:
@@ -370,14 +399,10 @@ elif tela == "⚖️ Comparador (Ranking)":
             # Cálculo do Fit Cultural (Nota de Aderência baseada na vaga)
             nota_aderencia = sum([animais[p] for p in perfis_ideais])
             
-            if nota_aderencia >= 65:
-                adequacao = "Excelente"
-            elif nota_aderencia >= 45:
-                adequacao = "Boa"
-            elif nota_aderencia >= 30:
-                adequacao = "Moderada"
-            else:
-                adequacao = "Baixa"
+            if nota_aderencia >= 65: adequacao = "Excelente"
+            elif nota_aderencia >= 45: adequacao = "Boa"
+            elif nota_aderencia >= 30: adequacao = "Moderada"
+            else: adequacao = "Baixa"
             
             # Tradução dos Animais para Critérios Profissionais
             agilidade = animais["Tubarão"]
@@ -395,46 +420,4 @@ elif tela == "⚖️ Comparador (Ranking)":
                 "Nota de Aderência": nota_aderencia,
                 "Adequação Geral": adequacao,
                 "Agilidade e Senso de Urgência": qualificar_criterio(agilidade),
-                "Organização e Regras": qualificar_criterio(organizacao),
-                "Atenção a Detalhes": qualificar_criterio(atencao_detalhes),
-                "Equilíbrio Emocional": qualificar_criterio(eq_emocional),
-                "Relacionamento Interpessoal": qualificar_criterio(relacionamento),
-                "Lidar com Pressão": qualificar_criterio(lidar_pressao),
-                "Adaptabilidade a Imprevistos": qualificar_criterio(adaptabilidade),
-                "Disciplina Operacional": qualificar_criterio(disciplina),
-                "Risco de Impulsividade": qualificar_criterio(risco_impulsividade, invertido=True),
-                "Animais Base": f"1º {max(animais, key=animais.get)}"
-            })
-
-        # Ordenar pelo Ranking (Maior Nota primeiro)
-        dados_comparativos.sort(key=lambda x: x["Nota de Aderência"], reverse=True)
-        
-        # Gerar a Tabela Dinâmica
-        df_tabela = pd.DataFrame(dados_comparativos)
-        
-        colunas_tabela = ["Candidato", "Agilidade e Senso de Urgência", "Organização e Regras", "Atenção a Detalhes", "Equilíbrio Emocional", "Relacionamento Interpessoal", "Lidar com Pressão", "Adaptabilidade a Imprevistos", "Disciplina Operacional", "Risco de Impulsividade", "Adequação Geral"]
-        
-        st.markdown("#### 📋 Matriz de Critérios Inerentes à Vaga")
-        st.dataframe(df_tabela[colunas_tabela].set_index("Candidato"), use_container_width=True)
-        
-        # Parecer Final e Ranking
-        st.markdown("#### 🏆 Parecer Comparativo e Ranking Final")
-        
-        for i, candidato in enumerate(dados_comparativos):
-            lugar = i + 1
-            nome = candidato["Candidato"]
-            nota = candidato["Nota de Aderência"]
-            perfil = candidato["Animais Base"].split("1º ")[1]
-            adequacao = candidato["Adequação Geral"]
-            
-            if lugar == 1:
-                st.markdown(f"🥇 **1º Lugar: {nome} (Aderência {adequacao})**")
-                st.write(f"Apresenta o perfil comportamental primário de **{perfil}**, garantindo o melhor equilíbrio e alinhamento prático com o contexto da vaga de {vaga_referencia}. Demonstra excelente {colunas_tabela[1].lower()} ({candidato[colunas_tabela[1]]}) e {colunas_tabela[2].lower()} ({candidato[colunas_tabela[2]]}), possuindo a maior tração operacional para assumir a rotina proposta de forma imediata.")
-            else:
-                st.markdown(f"**{lugar}º Lugar: {nome} (Aderência {adequacao})**")
-                st.write(f"Possui perfil de **{perfil}**, sendo compatível em diversas instâncias, com destaque para {colunas_tabela[7].lower()} ({candidato[colunas_tabela[7]]}). Contudo, no cruzamento total de competências exigidas para {vaga_referencia}, o seu indicador de {colunas_tabela[9].lower()} ({candidato[colunas_tabela[9]]}) ou alinhamento técnico exige um acompanhamento mais próximo da gestão caso seja contratado.")
-                
-        st.success(f"**Conclusão da Consultoria:** Todos os candidatos avaliados apresentam pontos fortes distintos. No entanto, o candidato **{dados_comparativos[0]['Candidato']}** é o mais recomendado, apresentando a maior nota global de Fit Cultural e o menor risco operacional para o escopo da função de {vaga_referencia}.")
-
-    elif len(candidatos_selecionados) > 0:
-        st.warning("Selecione pelo menos 2 candidatos e escreva o nome da vaga para gerar a comparação.")
+                "Organização e Regras": qualificar_
