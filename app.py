@@ -357,6 +357,15 @@ elif tela == "⚖️ Comparador (Ranking)":
             # Cálculo do Fit Cultural (Nota de Aderência baseada na vaga)
             nota_aderencia = sum([animais[p] for p in perfis_ideais])
             
+            if nota_aderencia >= 65:
+                adequacao = "Excelente"
+            elif nota_aderencia >= 45:
+                adequacao = "Boa"
+            elif nota_aderencia >= 30:
+                adequacao = "Moderada"
+            else:
+                adequacao = "Baixa"
+            
             # Tradução dos Animais para Critérios Profissionais
             agilidade = animais["Tubarão"]
             organizacao = animais["Lobo"]
@@ -371,6 +380,7 @@ elif tela == "⚖️ Comparador (Ranking)":
             dados_comparativos.append({
                 "Candidato": formatar_nome_proprio(cand),
                 "Nota de Aderência": nota_aderencia,
+                "Adequação Geral": adequacao,
                 "Agilidade e Senso de Urgência": qualificar_criterio(agilidade),
                 "Organização e Regras": qualificar_criterio(organizacao),
                 "Atenção a Detalhes": qualificar_criterio(atencao_detalhes),
@@ -388,7 +398,6 @@ elif tela == "⚖️ Comparador (Ranking)":
         
         # Gerar a Tabela Dinâmica
         df_tabela = pd.DataFrame(dados_comparativos)
-        df_tabela["Adequação Geral"] = df_tabela["Nota de Aderência"].apply(lambda x: "Excelente" if x >= 65 else ("Boa" if x >= 45 else ("Moderada" if x >= 30 else "Baixa")))
         
         colunas_tabela = ["Candidato", "Agilidade e Senso de Urgência", "Organização e Regras", "Atenção a Detalhes", "Equilíbrio Emocional", "Relacionamento Interpessoal", "Lidar com Pressão", "Adaptabilidade a Imprevistos", "Disciplina Operacional", "Risco de Impulsividade", "Adequação Geral"]
         
@@ -407,7 +416,7 @@ elif tela == "⚖️ Comparador (Ranking)":
             
             if lugar == 1:
                 st.markdown(f"🥇 **1º Lugar: {nome} (Aderência {adequacao})**")
-                st.write(f"Apresenta o perfil comportamental primário de **{perfil}**, garantindo o melhor equilíbrio e alinhamento prático com o contexto da vaga de {vaga_referencia}. Demonstra excelente {colunas_tabela[1].lower()} ({candidato[colunas_tabela[1]]}) e {colunas_tabela[2].lower()} ({candidato[colunas_tabela[2]]}), possuindo a maior tração operacional para assumir a rotina proposta de forma imediata.")
+                st.write(f"Apresenta o perfil comportamental primário de **{perfil}**, garantindo o melhor equilíbrio e alinhamento prático com o contexto da vaga de {vaga_referencia}. Demonstra {colunas_tabela[1].lower()} ({candidato[colunas_tabela[1]]}) e {colunas_tabela[2].lower()} ({candidato[colunas_tabela[2]]}), possuindo a maior tração operacional para assumir a rotina proposta de forma imediata.")
             else:
                 st.markdown(f"**{lugar}º Lugar: {nome} (Aderência {adequacao})**")
                 st.write(f"Possui perfil de **{perfil}**, sendo compatível em diversas instâncias, com destaque para {colunas_tabela[7].lower()} ({candidato[colunas_tabela[7]]}). Contudo, no cruzamento total de competências exigidas para {vaga_referencia}, o seu indicador de {colunas_tabela[9].lower()} ({candidato[colunas_tabela[9]]}) ou alinhamento técnico exige um acompanhamento mais próximo da gestão caso seja contratado.")
