@@ -343,8 +343,21 @@ elif tela == "⚖️ Comparador (Ranking)":
     components.html(script_pdf_comp, height=55)
 
     if len(candidatos_selecionados) >= 2 and vaga_referencia:
-        st.markdown("---")
-        st.markdown(f"### 📊 Análise Comparativa para: **{vaga_referencia}**")
+        st.markdown('<hr class="no-print" style="margin: 0.5em 0;">', unsafe_allow_html=True)
+        
+        # 🌟 NOVO CABEÇALHO OFICIAL COM A LOGO À ESQUERDA
+        with st.container():
+            col_logo_comp, col_tit_comp = st.columns([1.2, 4])
+            with col_logo_comp:
+                try: 
+                    st.image("Versão Melhorada da Marca.png", use_container_width=True)
+                except: 
+                    pass
+            with col_tit_comp:
+                st.markdown(f"### 📊 Análise Comparativa: **{vaga_referencia}**")
+                st.caption("Mapeamento e Ranking automatizados extraídos em tempo real pela Implantta Consultoria.")
+                
+        st.markdown('<br class="no-print">', unsafe_allow_html=True)
         
         perfis_ideais, tipo_vaga = categorizar_vaga(vaga_referencia)
         st.info(f"**Categoria da Vaga:** {tipo_vaga} | **Perfis de Maior Aderência:** {', '.join(perfis_ideais)}")
@@ -416,7 +429,7 @@ elif tela == "⚖️ Comparador (Ranking)":
             
             if lugar == 1:
                 st.markdown(f"🥇 **1º Lugar: {nome} (Aderência {adequacao})**")
-                st.write(f"Apresenta o perfil comportamental primário de **{perfil}**, garantindo o melhor equilíbrio e alinhamento prático com o contexto da vaga de {vaga_referencia}. Demonstra {colunas_tabela[1].lower()} ({candidato[colunas_tabela[1]]}) e {colunas_tabela[2].lower()} ({candidato[colunas_tabela[2]]}), possuindo a maior tração operacional para assumir a rotina proposta de forma imediata.")
+                st.write(f"Apresenta o perfil comportamental primário de **{perfil}**, garantindo o melhor equilíbrio e alinhamento prático com o contexto da vaga de {vaga_referencia}. Demonstra excelente {colunas_tabela[1].lower()} ({candidato[colunas_tabela[1]]}) e {colunas_tabela[2].lower()} ({candidato[colunas_tabela[2]]}), possuindo a maior tração operacional para assumir a rotina proposta de forma imediata.")
             else:
                 st.markdown(f"**{lugar}º Lugar: {nome} (Aderência {adequacao})**")
                 st.write(f"Possui perfil de **{perfil}**, sendo compatível em diversas instâncias, com destaque para {colunas_tabela[7].lower()} ({candidato[colunas_tabela[7]]}). Contudo, no cruzamento total de competências exigidas para {vaga_referencia}, o seu indicador de {colunas_tabela[9].lower()} ({candidato[colunas_tabela[9]]}) ou alinhamento técnico exige um acompanhamento mais próximo da gestão caso seja contratado.")
