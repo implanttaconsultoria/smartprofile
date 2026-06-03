@@ -420,4 +420,45 @@ elif tela == "⚖️ Comparador (Ranking)":
                 "Nota de Aderência": nota_aderencia,
                 "Adequação Geral": adequacao,
                 "Agilidade e Senso de Urgência": qualificar_criterio(agilidade),
-                "Organização e Regras": qualificar_
+                "Organização e Regras": qualificar_criterio(organizacao),
+                "Atenção a Detalhes": qualificar_criterio(atencao_detalhes),
+                "Equilíbrio Emocional": qualificar_criterio(eq_emocional),
+                "Relacionamento Interpessoal": qualificar_criterio(relacionamento),
+                "Lidar com Pressão": qualificar_criterio(lidar_pressao),
+                "Adaptabilidade a Imprevistos": qualificar_criterio(adaptabilidade),
+                "Disciplina Operacional": qualificar_criterio(disciplina),
+                "Risco de Impulsividade": qualificar_criterio(risco_impulsividade, invertido=True),
+                "Animais Base": f"1º {max(animais, key=animais.get)}"
+            })
+
+        # Ordenar pelo Ranking (Maior Nota primeiro)
+        dados_comparativos.sort(key=lambda x: x["Nota de Aderência"], reverse=True)
+        
+        # Gerar a Tabela Dinâmica
+        df_tabela = pd.DataFrame(dados_comparativos)
+        colunas_tabela = ["Candidato", "Agilidade e Senso de Urgência", "Organização e Regras", "Atenção a Detalhes", "Equilíbrio Emocional", "Relacionamento Interpessoal", "Lidar com Pressão", "Adaptabilidade a Imprevistos", "Disciplina Operacional", "Risco de Impulsividade", "Adequação Geral"]
+        
+        st.markdown("#### 📋 Matriz de Critérios Inerentes à Vaga")
+        st.dataframe(df_tabela[colunas_tabela].set_index("Candidato"), use_container_width=True)
+        
+        # Parecer Final e Ranking
+        st.markdown("#### 🏆 Parecer Comparativo e Ranking Final")
+        
+        for i, candidato in enumerate(dados_comparativos):
+            lugar = i + 1
+            nome = candidato["Candidato"]
+            nota = candidato["Nota de Aderência"]
+            perfil = candidato["Animais Base"].split("1º ")[1]
+            adequacao = candidato["Adequação Geral"]
+            
+            if lugar == 1:
+                st.markdown(f"🥇 **1º Lugar: {nome} (Aderência {adequacao})**")
+                st.write(f"Apresenta o perfil comportamental primário de **{perfil}**, garantindo o melhor equilíbrio e alinhamento prático com o contexto da vaga de {vaga_referencia}. Demonstra excelente {colunas_tabela[1].lower()} ({candidato[colunas_tabela[1]]}) e {colunas_tabela[2].lower()} ({candidato[colunas_tabela[2]]}), possuindo a maior tração operacional para assumir a rotina proposta de forma imediata.")
+            else:
+                st.markdown(f"**{lugar}º Lugar: {nome} (Aderência {adequacao})**")
+                st.write(f"Possui perfil de **{perfil}**, sendo compatível em diversas instâncias, com destaque para {colunas_tabela[7].lower()} ({candidato[colunas_tabela[7]]}). Contudo, no cruzamento total de competências exigidas para {vaga_referencia}, o seu indicador de {colunas_tabela[9].lower()} ({candidato[colunas_tabela[9]]}) ou alinhamento técnico exige um acompanhamento mais próximo da gestão caso seja contratado.")
+                
+        st.success(f"**Conclusão da Consultoria:** Todos os candidatos avaliados apresentam pontos fortes distintos. No entanto, o candidato **{dados_comparativos[0]['Candidato']}** é o mais recomendado, apresentando a maior nota global de Fit Cultural e o menor risco operacional para o escopo da função de {vaga_referencia}.")
+
+    elif len(candidatos_selecionados) > 0:
+        st.warning("Selecione pelo menos 2 candidatos e escreva o nome da vaga para gerar a comparação.")
